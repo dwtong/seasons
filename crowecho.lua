@@ -44,6 +44,10 @@ function init()
     sc.fade_time(v, fade_time)
     sc.phase_quant(v, 0.005) -- adjust to change performance impact
 
+    sc.post_filter_dry(v, 0)
+    sc.post_filter_lp(v, 1)
+    sc.post_filter_fc(v, 440)
+
     add_params(v)
     positions[v] = 0
     cut_points[v] = 0
@@ -63,19 +67,19 @@ function init()
   crow.input[1].mode("change", 1, 0.1, "rising")
   crow.input[1].change = change
 
-  -- testing
-  sc.level(1, 0.3)
-  sc.rate(1, 1.5)
-  sc.pan(1, -1.0)
-  sc.level(2, 0.3)
-  sc.rate(2, -1.5)
-  sc.pan(2, 1.0)
-  sc.level(3, 0.3)
-  sc.rate(3, 0.5)
-  sc.pan(3, -0.5)
-  sc.level(4, 0.3)
-  sc.rate(4, -0.5)
-  sc.pan(4, 0.5)
+  -- -- testing
+  -- sc.level(1, 0.3)
+  -- sc.rate(1, 1.5)
+  -- sc.pan(1, -1.0)
+  -- sc.level(2, 0.3)
+  -- sc.rate(2, -1.5)
+  -- sc.pan(2, 1.0)
+  -- sc.level(3, 0.3)
+  -- sc.rate(3, 0.5)
+  -- sc.pan(3, -0.5)
+  -- sc.level(4, 0.3)
+  -- sc.rate(4, -0.5)
+  -- sc.pan(4, 0.5)
 end
 
 function update_positions(i, pos)
@@ -143,4 +147,7 @@ function add_params(voice)
 
   params:add_control(voice.."_level", voice.." level", controlspec.DB)
   params:set_action(voice.."_level", function(n) sc.level(voice, util.dbamp(n)) end)
+
+  params:add_control(voice.."_filter", voice.." filter", controlspec.FREQ)
+  params:set_action(voice.."_filter", function(n) sc.post_filter_fc(voice, n) end)
 end

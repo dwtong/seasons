@@ -10,10 +10,10 @@ vbuffer = sc.BUFFER_SIZE/voices
 function init()
   audio.level_cut(1)
   audio.level_adc_cut(1)
-  
+
   for v=1, voices do
     start = vbuffer * v - vbuffer
-    
+
     sc.level_input_cut(1, v, 1.0)
     sc.level_input_cut(2, v, 1.0)
     sc.enable(v, 1)
@@ -28,8 +28,8 @@ function init()
     sc.loop_end(v, start + vbuffer)
     sc.rec(v, 1)
     sc.rec_level(v, 1.0)
-    sc.pre_level(v, 0)
-    
+    sc.pre_level(v, 0.2)
+
     -- clock per voice
     clock.run(reset_heads, v)
   end
@@ -37,7 +37,7 @@ end
 
 function reset_heads(v)
   while true do
-    clock.sleep(v*0.25)
+    clock.sync(1/v)
     sc.position(v, vbuffer * v - vbuffer)
     print("reset "..v)
   end
