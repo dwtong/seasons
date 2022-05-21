@@ -21,9 +21,9 @@ function init()
   -- TODO enable this after setting sane defaults
   -- params:bang()
 
-  -- crow.input[1].mode("change", 2.0, 0.25, "rising")
+  crow.input[1].mode("change", 2.0, 0.25, "rising")
   -- crow.input[2].mode("change", 2.0, 0.25, "rising")
-  -- crow.input[1].change = toggle_freeze
+  crow.input[1].change = toggle_freeze
   -- crow.input[2].change = flip_rate
 end
 
@@ -52,10 +52,12 @@ function init_softcut(v)
   sc.filter_fc(v, 1200);
   sc.filter_lp(v, 0);
   sc.filter_bp(v, 1.0);
+  sc.filter_hp(v, 0.0);
   sc.filter_rq(v, 2.0);
 
   -- params for testing
   sc.pan(v, pans[v])
+  sc.level(v, 0.8)
 end
 
 function init_params(v)
@@ -85,6 +87,28 @@ function init_params(v)
     _menu.rebuild_params()
   end)
 end
+function redraw()
+  screen.clear()
+
+    -- screen.move(10, voices*10+10)
+    -- screen.text("rec position:")
+    -- screen.move(118,voices*10+10)
+    -- screen.text_right(string.format("%.2f", positions[5]))
+
+  for v=1, voices do
+    screen.move(10, v*10)
+    screen.text(v.." frozen:")
+    screen.move(118,v*10)
+    local frozen = params:get(v.."freeze") == 1
+    -- local state = if frozen then "play" else "rec" end
+    screen.text_right(string.format('%q', frozen))
+  end
+
+  screen.move(10, voices*10+20)
+  if trig_text then screen.text("trigger!") end
+
+  screen.update()
+end
 
 function reset_head(v)
   while true do
@@ -101,10 +125,19 @@ function reset_head(v)
 end
 
 function toggle_freeze()
+  print("toggle freeze")
   for v=1, voices do
     local state = params:get(v.."freeze")
     params:set(v.."freeze", math.abs(state-1))
   end
+
+  clock.run(function()
+    trig_text = true
+    redraw()
+    clock.sleep(0.2)
+    trig_text = false
+    redraw()
+  end)
 end
 
 function flip_rate()
