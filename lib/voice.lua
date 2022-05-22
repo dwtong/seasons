@@ -1,6 +1,6 @@
 ZONE_LENGTH = 64 -- buffer zone per voice, factor of 2
 ROLL_LENGTH = 8 -- pre/post roll at start and end of zones
-DEFAULT_PRE = 0.0 -- TODO move to params
+DEFAULT_PRE = 0.5 -- TODO move to params
 
 voice = {}
 
@@ -13,7 +13,7 @@ function voice.init_softcut(v)
 
   sc.enable(v, 1)
   sc.buffer(v, 1)
-  sc.fade_time(v, 0.5)
+  sc.fade_time(v, 0.01) -- TODO fade time maps to clock rate
   sc.play(v, 1)
 
   -- TODO set these with params:bang
