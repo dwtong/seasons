@@ -4,6 +4,7 @@
 
 s = require 'sequins'
 voice = include 'lib/voice'
+actions = include 'lib/actions'
 sc = softcut
 
 VOICE_COUNT = 4
@@ -16,25 +17,23 @@ function init()
   audio.level_adc_cut(1)
 
   for v=1, VOICE_COUNT do
-    voices[v] = { actions = {} }
+    -- voices[v] = { actions = {} }
+    voices[v] = {}
     voice.init_softcut(v)
     voice.init_params(v)
-    clock.run(reset_head, v)
     positions[v] = 0
-    sc.phase_quant(v, 0.01) -- adjust to change performance impact
+    sc.phase_quant(v, 0.05) -- adjust to change performance impact
     sc.event_phase(update_positions)
     sc.poll_start_phase()
 
     -- params for testing
-    -- if v == 1 then
       pans = {-1.0, -0.5, 0.5, 1}
       params:set(v.."pan", pans[v])
-      -- params:set(v.."pan", -1.0)
       params:set(v.."level", 0.7)
-      voices[v].actions.toggle_rec = s{1,0}:every(v)
+      -- TODO should call this something better than actions
+      -- voices[v].actions.toggle_rec = s{1,0}:every(v)
       sc.fade_time(v, v/2) -- TODO fade time maps to clock rate
-    -- end
-
+      clock.run(perform_action, actions.reset_head, v/2, v)
   end
   -- TODO enable this after setting sane defaults
   -- params:bang()
@@ -52,10 +51,17 @@ function init()
   clock.run(function ()
     i = 1
     while true do
-      crow.ii.jf.play_note(sca()/12 + octave(), 5)
+      crow.ii.jf.play_note(sca()/12 + octave(), 2)
       clock.sync(1)
     end
   end)
+end
+
+function perform_action(fn, rate, ...)
+  while true do
+    clock.sync(rate)
+    fn(...)
+  end
 end
 
 function update_positions(i, pos)
@@ -85,41 +91,17 @@ function reset_head(v)
   while true do
     clock_sync = v - v*0.1 -- TODO param
     -- clock.sync(t, offset)
-    print(clock_sync)
     clock.sync(clock_sync)
-    -- local recording = params:get(v.."togglerec") == 1
-    -- local rate = params:get(v.."rate")
-
-    -- if not recording and rate < 0 then
-    --   print('play backwards')
-    --   -- playing in reverse, start at end of buffer zone
-    --   -- TODO use clock.get_beat_sec() instead?
-    --   local position = voice.zone_start(v) + clock_sync/(clock.get_tempo()/60)
-    --   sc.position(v, position)
-    -- else
-    --   -- start at start of buffer zone
-      sc.position(v, voice.zone_start(v))
-    -- end
   end
 end
 
-function toggle_rec()
-  for v=1, #voices do
-    voices[v].actions.toggle_rec()
-    -- peek is a workaround because using sequins:every(x) doesn't always return a number
-    -- FIXME using peek will not "skip" values but rather "hold" them
-    local state = voices[v].actions.toggle_rec:peek()
-    params:set(v.."togglerec", state)
-  end
-
-  clock.run(function()
-    trig_text = true
-    redraw()
-    clock.sleep(0.2)
-    trig_text = false
-    redraw()
-  end)
-end
+  -- clock.run(function()
+  --   trig_text = true
+  --   redraw()
+  --   clock.sleep(0.2)
+  --   trig_text = false
+  --   redraw()
+  -- end)
 
 function flip_rate(v)
   -- for v=1, #voices do

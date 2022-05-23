@@ -45,6 +45,7 @@ function voice.init_params(v)
   params:add_control(v.."pan", v.." pan", controlspec.PAN)
   params:set_action(v.."pan", function(n) sc.pan(v, n) end)
 
+  -- TODO rec_rate and play_rate - option for play_rate to follow rec_rate
   -- params:add_option(v.."rate", v.." rate", rates, 10)
   params:add_control(v.."rate", v.." rate", controlspec.PAN)
   params:set_action(v.."rate", function(n) sc.rate(v, n) end)
@@ -55,13 +56,11 @@ function voice.init_params(v)
   params:add_binary(v.."togglerec", "toggle rec (K3)", "toggle", 1)
   params:set_action(v.."togglerec",function(x)
     if x == 1 then
-      print(v.."rec")
       sc.rec_level(v, 1.0)
       sc.pre_level(v, DEFAULT_PRE)
       -- TODO reenable after adding rate params
       -- sc.rate(v, 1.0)
     else
-      print(v.."play")
       sc.rec_level(v, 0)
       sc.pre_level(v, 1.0) -- preserve current buffer contents
       -- TODO reenable after adding rate params
