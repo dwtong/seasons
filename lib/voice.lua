@@ -5,11 +5,12 @@ voice = {}
 local defaults = {
   PRE_LEVEL = 0.5,
   REC_LEVEL = 1.0,
-  LEVEL = 0.0
+  LEVEL = 0.6
 }
 
 function voice.zone_start(v) return (v-1)*ZONE_LENGTH + v*ROLL_LENGTH end
 function voice.zone_end(v) return v*ZONE_LENGTH + v*ROLL_LENGTH  end
+function sync_time(v) return v*8 end
 
 function voice.init_softcut(v)
   sc.level_input_cut(1, v, 1.0)
@@ -39,13 +40,19 @@ function voice.init_softcut(v)
   sc.filter_bp(v, 1.0);
   sc.filter_hp(v, 0.0);
   sc.filter_rq(v, 2.0);
+  sc.phase_quant(v, 0.05) -- adjust to change performance impact
+  sc.event_phase(update_position)
+  sc.poll_start_phase()
 end
 
 function voice.init_params(v)
-  params:add_group("voice "..v, 6)
+  params:add_group("voice "..v, 7)
 
   params:add_control(v.."pan", v.." pan", controlspec.PAN)
   params:set_action(v.."pan", function(n) sc.pan(v, n) end)
+  -- for testing
+  -- pans = {-1.0, -0.5, 0.5, 1}
+  -- params:set(v.."pan", pans[v])
 
   -- TODO rec_rate and play_rate - option for play_rate to follow rec_rate
   -- params:add_option(v.."rate", v.." rate", rates, 10)
@@ -64,6 +71,16 @@ function voice.init_params(v)
   params:set(v.."prelevel", defaults.PRE_LEVEL)
   params:set_action(v.."prelevel", function(n) sc.pre_level(v, n) end)
 
+  params:add_control(v.."fadeamount", v.." fade amount", controlspec.UNIPOLAR)
+  params:set_action(v.."fadeamount", function(n)
+    -- TODO this function will also need to be called when changing the loop size - eventually won't use ZONE_LENGTH constant
+    -- also need to take into account whether we are using position changes or loop changes - don't want a long loop but short position
+    local fade_time = sync_time(v)*n
+    sc.fade_time(v, fade_time) -- TODO fade time maps to clock rate
+    print(v.." fade time: "..fade_time)
+  end)
+  params:set(v.."fadeamount", 1.0)
+
   params:add_binary(v.."togglerec", "toggle rec (K3)", "toggle", 1)
   params:set_action(v.."togglerec",function(x)
     if x == 1 then
@@ -80,6 +97,12 @@ function voice.init_params(v)
     -- TODO only call this when actually viewing the menu
     -- _menu.rebuild_params()
   end)
+end
+
+function voice.init_actions(v)
+  local sync = sync_time(v)
+  print(v.." sync time: "..sync)
+  clock.run(perform_action, actions.reset_head, sync, v)
 end
 
 return voice

@@ -7,9 +7,8 @@ voice = include 'lib/voice'
 actions = include 'lib/actions'
 sc = softcut
 
-VOICE_COUNT = 4
+VOICE_COUNT = 1
 voices = {}
-positions = {}
 
 function init()
   sc.buffer_clear()
@@ -19,23 +18,12 @@ function init()
   params:add_separator("VOICES")
 
   for v=1, VOICE_COUNT do
-    -- voices[v] = { actions = {} }
-    voices[v] = {}
+    voices[v] = {
+      position = 0
+    }
     voice.init_softcut(v)
     voice.init_params(v)
-    positions[v] = 0
-    sc.phase_quant(v, 0.05) -- adjust to change performance impact
-    sc.event_phase(update_positions)
-    sc.poll_start_phase()
-
-    -- params for testing
-      pans = {-1.0, -0.5, 0.5, 1}
-      params:set(v.."pan", pans[v])
-      params:set(v.."level", 0.7)
-      -- TODO should call this something better than actions
-      -- voices[v].actions.toggle_rec = s{1,0}:every(v)
-      sc.fade_time(v, v/2) -- TODO fade time maps to clock rate
-      clock.run(perform_action, actions.reset_head, v/2, v)
+    voice.init_actions(v)
   end
 
   -- TODO crow init that also fires when plugged in
@@ -57,16 +45,16 @@ function init()
   end)
 end
 
+function update_position(v, pos)
+  voices[v].position = pos - 1
+  redraw()
+end
+
 function perform_action(fn, rate, ...)
   while true do
     clock.sync(rate)
     fn(...)
   end
-end
-
-function update_positions(i, pos)
-  positions[i] = pos - 1
-  redraw()
 end
 
 function redraw()
@@ -75,7 +63,7 @@ function redraw()
     screen.move(10, v*10)
     screen.text(v.." position:")
     screen.move(118,v*10)
-    screen.text_right(string.format("%.1f", positions[v] - voice.zone_start(v) + 1))
+    screen.text_right(string.format("%.1f", voices[v].position - voice.zone_start(v) + 1))
   end
 
   screen.move(10, #voices*10+20)
