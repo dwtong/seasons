@@ -37,8 +37,6 @@ function init()
       sc.fade_time(v, v/2) -- TODO fade time maps to clock rate
       clock.run(perform_action, actions.reset_head, v/2, v)
   end
-  -- TODO enable this after setting sane defaults
-  -- params:bang()
 
   -- TODO crow init that also fires when plugged in
   crow.input[1].mode("change", 2.0, 0.25, "rising")

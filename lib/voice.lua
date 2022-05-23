@@ -1,8 +1,12 @@
 ZONE_LENGTH = 64 -- buffer zone per voice, factor of 2
 ROLL_LENGTH = 8 -- pre/post roll at start and end of zones
-DEFAULT_PRE = 0.5 -- TODO move to params
 
 voice = {}
+local defaults = {
+  PRE_LEVEL = 0.5,
+  REC_LEVEL = 1.0,
+  LEVEL = 0.0
+}
 
 function voice.zone_start(v) return (v-1)*ZONE_LENGTH + v*ROLL_LENGTH end
 function voice.zone_end(v) return v*ZONE_LENGTH + v*ROLL_LENGTH  end
@@ -16,12 +20,11 @@ function voice.init_softcut(v)
   sc.fade_time(v, 0.01) -- TODO fade time maps to clock rate
   sc.play(v, 1)
 
-  -- TODO set these with params:bang
-  sc.level(v, 0.0)
+  sc.level(v, defaults.LEVEL)
   sc.rate(v, 1.0)
   sc.pan(v, 0)
-  sc.rec_level(v, 1.0)
-  sc.pre_level(v, DEFAULT_PRE)
+  sc.pre_level(v, defaults.PRE_LEVEL)
+  sc.rec_level(v, defaults.REC_LEVEL)
 
   sc.loop(v, 1)
   sc.position(v, voice.zone_start(v))
@@ -39,7 +42,7 @@ function voice.init_softcut(v)
 end
 
 function voice.init_params(v)
-  params:add_group("voice "..v, 4)
+  params:add_group("voice "..v, 6)
 
   params:add_control(v.."pan", v.." pan", controlspec.PAN)
   params:set_action(v.."pan", function(n) sc.pan(v, n) end)
@@ -49,14 +52,23 @@ function voice.init_params(v)
   params:add_control(v.."rate", v.." rate", controlspec.PAN)
   params:set_action(v.."rate", function(n) sc.rate(v, n) end)
 
-  params:add_control(v.."level", v.." level", controlspec.DB)
-  params:set_action(v.."level", function(n) sc.level(v, util.dbamp(n)) end)
+  params:add_control(v.."level", v.." level", controlspec.UNIPOLAR)
+  params:set(v.."level", defaults.LEVEL)
+  params:set_action(v.."level", function(n) sc.level(v, n) end)
+
+  params:add_control(v.."reclevel", v.." rec level", controlspec.UNIPOLAR)
+  params:set(v.."reclevel", defaults.REC_LEVEL)
+  params:set_action(v.."reclevel", function(n) sc.rec_level(v, n) end)
+
+  params:add_control(v.."prelevel", v.." pre level", controlspec.UNIPOLAR)
+  params:set(v.."prelevel", defaults.PRE_LEVEL)
+  params:set_action(v.."prelevel", function(n) sc.pre_level(v, n) end)
 
   params:add_binary(v.."togglerec", "toggle rec (K3)", "toggle", 1)
   params:set_action(v.."togglerec",function(x)
     if x == 1 then
-      sc.rec_level(v, 1.0)
-      sc.pre_level(v, DEFAULT_PRE)
+      sc.rec_level(v, params:get(v.."reclevel"))
+      sc.pre_level(v, params:get(v.."prelevel"))
       -- TODO reenable after adding rate params
       -- sc.rate(v, 1.0)
     else
