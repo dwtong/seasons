@@ -16,6 +16,8 @@ function init()
   audio.level_cut(1)
   audio.level_adc_cut(1)
 
+  params:add_separator("VOICES")
+
   for v=1, VOICE_COUNT do
     -- voices[v] = { actions = {} }
     voices[v] = {}

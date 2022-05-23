@@ -39,8 +39,7 @@ function voice.init_softcut(v)
 end
 
 function voice.init_params(v)
-  params:add_separator("voice "..v)
-  -- params:add_group("voice "..v, 2)
+  params:add_group("voice "..v, 4)
 
   params:add_control(v.."pan", v.." pan", controlspec.PAN)
   params:set_action(v.."pan", function(n) sc.pan(v, n) end)
