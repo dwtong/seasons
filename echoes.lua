@@ -5,9 +5,10 @@
 s = require 'sequins'
 voice = include 'lib/voice'
 actions = include 'lib/actions'
+cr = include 'lib/crow'
 sc = softcut
 
-VOICE_COUNT = 1
+VOICE_COUNT = 4
 voices = {}
 
 function init()
@@ -26,11 +27,7 @@ function init()
     voice.init_actions(v)
   end
 
-  -- TODO crow init that also fires when plugged in
-  crow.input[1].mode("change", 2.0, 0.25, "rising")
-  -- crow.input[2].mode("change", 2.0, 0.25, "rising")
-  crow.input[1].change = toggle_rec
-  -- crow.input[2].change = flip_rate
+  norns.crow.add = cr.init() -- crow
 
   -- testing with jf
   sca = s{0,2,4,7,9}
@@ -67,7 +64,7 @@ function redraw()
   end
 
   screen.move(10, #voices*10+20)
-  if trig_text then screen.text("trigger!") end
+  if cr.trig_text then screen.text("trigger!") end
 
   screen.update()
 end
@@ -82,14 +79,6 @@ function reset_head(v)
     clock.sync(clock_sync)
   end
 end
-
-  -- clock.run(function()
-  --   trig_text = true
-  --   redraw()
-  --   clock.sleep(0.2)
-  --   trig_text = false
-  --   redraw()
-  -- end)
 
 function flip_rate(v)
   -- for v=1, #voices do
