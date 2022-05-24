@@ -1,13 +1,26 @@
 ZONE_LENGTH = 64 -- buffer zone per voice, factor of 2
 ROLL_LENGTH = 8 -- pre/post roll at start and end of zones
+MIN_LOOP_SIZE = 0.05 -- 50ms/20hz
 
 voice = {}
 local defaults = {
   PRE_LEVEL = 0.8,
   SEND_LEVEL = 0.0,
   REC_LEVEL = 1.0,
-  LEVEL = 0.5,
-  FADE_AMOUNT = 0.25
+  LEVEL = 0.0,
+  FADE_AMOUNT = 0.25,
+}
+
+local specs = {
+  position = controlspec.def{
+    min=0, max=ZONE_LENGTH, warp='lin', step=0.0001,
+    default=0, quantum=0.0001, wrap=false, units='s'
+  },
+
+  loop_length = controlspec.def{
+    min=0.01, max=ZONE_LENGTH, warp='lin', step=0.0001,
+    default=ZONE_LENGTH, quantum=0.0001, wrap=false, units='s'
+  }
 }
 
 function voice.zone_start(v) return (v-1)*ZONE_LENGTH + v*ROLL_LENGTH end
@@ -55,9 +68,9 @@ end
 
 function voice.init_params(v)
   print("init voice "..v.." params")
-  params:add_group("voice "..v, 13)
+  params:add_group("voice "..v, 16)
 
-  params:add_separator("LEVELS")
+  params:add_separator("SPACE")
 
   params:add_control(v.."pan", "pan", controlspec.PAN)
   params:set_action(v.."pan", function(n) sc.pan(v, n) end)
@@ -95,7 +108,16 @@ function voice.init_params(v)
   end)
   params:set(v.."fadeamount", defaults.FADE_AMOUNT)
 
-  params:add_separator("ACTIONS")
+  params:add_separator("TIME")
+
+  -- TODO relationship of loop start/end to position
+  params:add_control(v.."looplength","loop length", specs.loop_length)
+  params:set_action(v.."looplength", function(n) sc.loop_end(v, voice.zone_start(v)+n) end)
+
+  params:add_control(v.."position", "position", specs.position)
+  params:set_action(v.."position", function(n) sc.position(v, voice.zone_start(v)+n) end)
+
+  params:add_separator("MUTATE")
 
   params:add_binary(v.."togglerec", "toggle rec (K3)", "toggle", 1)
   params:set_action(v.."togglerec",function(x)
