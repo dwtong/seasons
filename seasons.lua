@@ -1,6 +1,6 @@
---- echoes
+--- seasons
 --
--- four tap clocked delay/looper
+-- time evolving sound // sound evolving time
 
 s = require 'sequins'
 voice = include 'lib/voice'
