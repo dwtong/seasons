@@ -28,18 +28,6 @@ function init()
   end
 
   norns.crow.add = cr.init() -- crow
-
-  -- testing with jf
-  sca = s{0,2,4,7,9}
-  octave = s{0,0,0,1,1,1}
-  crow.ii.jf.mode(1)
-  clock.run(function()
-    i = 1
-    while true do
-      crow.ii.jf.play_note(sca()/12 + octave(), 2)
-      clock.sync(1)
-    end
-  end)
 end
 
 function update_position(v, pos)
