@@ -5,6 +5,7 @@ MIN_LOOP_SIZE = 0.05 -- 50ms/20hz
 voice = {}
 local defaults = {
   PRE_LEVEL = 0.8,
+  INPUT_LEVEL = 1.0,
   SEND_LEVEL = 0.0,
   REC_LEVEL = 1.0,
   LEVEL = 0.7,
@@ -31,12 +32,10 @@ end
 function voice.zone_end(v) return voice.zone_start(v) + ZONE_LENGTH end
 function voice.is_rec(v) return params:get(v.."togglerec") == 1 end
 
--- function sync_time(v) return v*2-v*0.1 end
-
 function voice.init_softcut(v)
   print("init voice "..v.." softcut")
-  sc.level_input_cut(1, v, 1.0)
-  sc.level_input_cut(2, v, 1.0)
+  sc.level_input_cut(1, v, defaults.INPUT_LEVEL)
+  sc.level_input_cut(2, v, defaults.INPUT_LEVEL)
 
   sc.enable(v, 1)
   sc.buffer(v, 1)
@@ -73,7 +72,7 @@ end
 
 function voice.init_params(v)
   print("init voice "..v.." params")
-  params:add_group("voice "..v, 20)
+  params:add_group("voice "..v, 23)
 
   params:add_separator("SPACE")
 
@@ -176,6 +175,17 @@ function voice.init_params(v)
       params:set_action(v.."levelcutcut"..vdest, function(n) sc.level_cut_cut(v, vdest, n) end)
     end
   end
+
+  params:add_separator("INPUT")
+
+  params:add_control(v.."linputlevel", "ext input level L", controlspec.UNIPOLAR)
+  params:set(v.."linputlevel", defaults.INPUT_LEVEL)
+  params:set_action(v.."linputlevel", function(n) sc.level_input_cut(1, v, n) end)
+
+  params:add_control(v.."rinputlevel", "ext input level R", controlspec.UNIPOLAR)
+  params:set(v.."rinputlevel", defaults.INPUT_LEVEL)
+  params:set_action(v.."rinputlevel", function(n) sc.level_input_cut(2, v, n) end)
+
 end
 
 function voice.init_actions(v)
