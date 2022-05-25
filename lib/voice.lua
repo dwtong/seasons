@@ -4,15 +4,15 @@ MIN_LOOP_SIZE = 0.05 -- 50ms/20hz
 
 voice = {}
 local defaults = {
-  PRE_LEVEL = 0.8,
+  PRE_LEVEL = 0.7,
   SEND_LEVEL = 0.0,
   REC_LEVEL = 1.0,
-  LEVEL = 0.0,
+  LEVEL = 0.7,
   FADE_AMOUNT = 0.25,
 }
 
 local specs = {
-  position = controlspec.def{
+  zone_length = controlspec.def{
     min=0, max=ZONE_LENGTH, warp='lin', step=0.0001,
     default=0, quantum=0.0001, wrap=false, units='s'
   },
@@ -27,7 +27,7 @@ function voice.zone_start(v) return (v-1)*ZONE_LENGTH + v*ROLL_LENGTH end
 function voice.zone_end(v) return v*ZONE_LENGTH + v*ROLL_LENGTH  end
 function voice.is_rec(v) return params:get(v.."togglerec") == 1 end
 
-function sync_time(v) return v*2-v*0.1 end
+-- function sync_time(v) return v*2-v*0.1 end
 
 function voice.init_softcut(v)
   print("init voice "..v.." softcut")
@@ -50,25 +50,26 @@ function voice.init_softcut(v)
   sc.loop_end(v, voice.zone_end(v))
   sc.rec(v, 1)
 
+  sc.phase_quant(v, 0.05) -- adjust to change performance impact
+  sc.event_phase(update_position)
+  sc.poll_start_phase()
+
   for vdest=1, VOICE_COUNT do
     if vdest ~= v then sc.level_cut_cut(v, vdest, defaults.SEND_LEVEL) end
   end
 
   -- nice filter defaults from halfsecond
-  sc.filter_dry(v, 0.125);
-  sc.filter_fc(v, 1200);
-  sc.filter_lp(v, 0);
-  sc.filter_bp(v, 1.0);
-  sc.filter_hp(v, 0.0);
-  sc.filter_rq(v, 2.0);
-  sc.phase_quant(v, 0.05) -- adjust to change performance impact
-  sc.event_phase(update_position)
-  sc.poll_start_phase()
+  sc.pre_filter_dry(v, 0.125);
+  sc.pre_filter_fc(v, 1200);
+  sc.pre_filter_lp(v, 0.0);
+  sc.pre_filter_bp(v, 1.0);
+  sc.pre_filter_hp(v, 0.0);
+  sc.pre_filter_rq(v, 2.0);
 end
 
 function voice.init_params(v)
   print("init voice "..v.." params")
-  params:add_group("voice "..v, 16)
+  params:add_group("voice "..v, 18)
 
   params:add_separator("SPACE")
 
@@ -103,7 +104,9 @@ function voice.init_params(v)
   params:set_action(v.."fadeamount", function(n)
     -- TODO this function will also need to be called when changing the loop size - eventually won't use ZONE_LENGTH constant
     -- also need to take into account whether we are using position changes or loop changes - don't want a long loop but short position
-    local fade_time = sync_time(v)*n
+    -- local fade_time = sync_time(v)*n
+    -- FIXME
+    local fade_time = 0.1
     sc.fade_time(v, fade_time) -- TODO fade time maps to clock rate
   end)
   params:set(v.."fadeamount", defaults.FADE_AMOUNT)
@@ -114,8 +117,16 @@ function voice.init_params(v)
   params:add_control(v.."looplength","loop length", specs.loop_length)
   params:set_action(v.."looplength", function(n) sc.loop_end(v, voice.zone_start(v)+n) end)
 
-  params:add_control(v.."position", "position", specs.position)
-  params:set_action(v.."position", function(n) sc.position(v, voice.zone_start(v)+n) end)
+  params:add_control(v.."position", "position", specs.zone_length)
+  -- params:set_action(v.."position", function(n) sc.position(v, voice.zone_start(v)+n) end)
+
+  -- TODO change test values
+  params:add_control(v.."syncrate", "sync rate", specs.zone_length)
+  params:set(v.."syncrate", v*3)
+
+  -- TODO change test values
+  params:add_control(v.."syncoffset", "sync offset", specs.zone_length)
+  params:set(v.."syncoffset", v*0.2)
 
   params:add_separator("MUTATE")
 
@@ -146,8 +157,20 @@ function voice.init_params(v)
 end
 
 function voice.init_actions(v)
-  local sync = sync_time(v)
-  clock.run(perform_action, actions.reset_head, sync, v)
+  -- local sync = v
+  -- clock.run(perform_action, actions.reset_head, sync, v)
+  -- rates = s{v, s{v*5}:every(4)}
+  -- rate_fn = s{v, v, v, v*4}
+
+  action_fn = function ()
+    local pos = voice.zone_start(v) + params:get(v.."position")
+    sc.position(v, pos)
+  end
+
+  rate_fn = function() return params:get(v.."syncrate") end
+  offset_fn = function() return params:get(v.."syncoffset") end
+
+  clock_sync_action(action_fn, rate_fn, offset_fn, v)
 end
 
 return voice

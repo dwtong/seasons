@@ -47,6 +47,18 @@ function update_position(v, pos)
   redraw()
 end
 
+-- callback functions can be sequins, or other functions that return values
+function clock_sync_action(action_fn, rate_fn, offset_fn, ...)
+  local args = ...
+
+  return clock.run(function()
+    while true do
+      clock.sync(rate_fn() + offset_fn())
+      action_fn(args)
+    end
+  end)
+end
+
 function perform_action(fn, rate, ...)
   while true do
     clock.sync(rate)

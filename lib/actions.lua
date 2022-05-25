@@ -1,5 +1,6 @@
 actions = {}
 
+-- TODO unused?
 function actions.reset_head(v, position)
   position = position or voice.zone_start(v)
   -- local recording = params:get(v.."togglerec") == 1
