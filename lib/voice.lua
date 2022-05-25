@@ -4,7 +4,7 @@ MIN_LOOP_SIZE = 0.05 -- 50ms/20hz
 
 voice = {}
 local defaults = {
-  PRE_LEVEL = 0.7,
+  PRE_LEVEL = 0.8,
   SEND_LEVEL = 0.0,
   REC_LEVEL = 1.0,
   LEVEL = 0.7,
@@ -16,15 +16,19 @@ local specs = {
     min=0, max=ZONE_LENGTH, warp='lin', step=0.0001,
     default=0, quantum=0.0001, wrap=false, units='s'
   },
-
   loop_length = controlspec.def{
     min=0.01, max=ZONE_LENGTH, warp='lin', step=0.0001,
     default=ZONE_LENGTH, quantum=0.0001, wrap=false, units='s'
   }
 }
 
-function voice.zone_start(v) return (v-1)*ZONE_LENGTH + v*ROLL_LENGTH end
-function voice.zone_end(v) return v*ZONE_LENGTH + v*ROLL_LENGTH  end
+function voice.zone_start(v)
+  -- FIXME surely this is inefficient
+  zone = params.lookup[v.."zone"] and params:get(v.."zone") or v
+  return (zone-1)*ZONE_LENGTH + zone*ROLL_LENGTH
+end
+
+function voice.zone_end(v) return voice.zone_start(v) + ZONE_LENGTH end
 function voice.is_rec(v) return params:get(v.."togglerec") == 1 end
 
 -- function sync_time(v) return v*2-v*0.1 end
@@ -69,7 +73,7 @@ end
 
 function voice.init_params(v)
   print("init voice "..v.." params")
-  params:add_group("voice "..v, 19)
+  params:add_group("voice "..v, 20)
 
   params:add_separator("SPACE")
 
@@ -112,6 +116,13 @@ function voice.init_params(v)
   params:set(v.."fadeamount", defaults.FADE_AMOUNT)
 
   params:add_separator("TIME")
+
+  params:add_number(v.."zone", "buffer zone", 1, 4, v)
+  params:set_action(v.."zone", function(n)
+    sc.position(v, voice.zone_start(n))
+    sc.loop_start(v, voice.zone_start(n))
+    sc.loop_end(v, voice.zone_end(n))
+  end)
 
   -- TODO relationship of loop start/end to position
   params:add_control(v.."looplength","loop length", specs.loop_length)
