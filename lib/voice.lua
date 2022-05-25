@@ -69,7 +69,7 @@ end
 
 function voice.init_params(v)
   print("init voice "..v.." params")
-  params:add_group("voice "..v, 18)
+  params:add_group("voice "..v, 19)
 
   params:add_separator("SPACE")
 
@@ -146,6 +146,17 @@ function voice.init_params(v)
   end)
 
   params:add_separator("SENDS")
+
+  params:add_control(v.."levelcutcutall", "send to all level", controlspec.UNIPOLAR)
+  params:set(v.."levelcutcutall", defaults.SEND_LEVEL)
+  params:set_action(v.."levelcutcutall", function(n)
+    for vdest=1, VOICE_COUNT do
+      if vdest ~= v then
+        params:set(v.."levelcutcut"..vdest, n)
+        if norns.menu.status() then _menu.rebuild_params() end
+      end
+    end
+  end)
 
   for vdest=1, VOICE_COUNT do
     if vdest ~= v then
