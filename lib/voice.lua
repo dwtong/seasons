@@ -8,7 +8,7 @@ local defaults = {
   INPUT_LEVEL = 1.0,
   SEND_LEVEL = 0.0,
   REC_LEVEL = 1.0,
-  LEVEL = 0.5,
+  LEVEL = 0.6,
   FADE_AMOUNT = 0.25,
 }
 
@@ -72,34 +72,72 @@ end
 
 function voice.init_params(v)
   print("init voice "..v.." params")
-  params:add_group("voice "..v, 25)
+  params:add_group("voice "..v, 28)
 
-  params:add_separator("SPACE")
+  params:add_separator("PLAY")
 
   params:add_control(v.."pan", "pan", controlspec.PAN)
   params:set_action(v.."pan", function(n) sc.pan(v, n) end)
-  -- for testing
+  -- FIXME for testing
   pans = {-1.0, -0.5, 0.5, 1}
   params:set(v.."pan", pans[v])
-
-  -- TODO rec_rate and play_rate - option for play_rate to follow rec_rate
-  params:add_option(v.."rate", "play rate", rates, 3)
-  params:set_action(v.."rate", function(n) sc.rate(v, rates[n]) end)
 
   params:add_control(v.."level", "level", controlspec.UNIPOLAR)
   params:set(v.."level", defaults.LEVEL)
   params:set_action(v.."level", function(n) sc.level(v, n) end)
 
+  params:add_option(v.."rate", "rate", rates, 3)
+  params:set_action(v.."rate", function(n) sc.rate(v, rates[n]) end)
+
+  params:add_control(v.."fadeamount", "fade amount", controlspec.UNIPOLAR)
+  params:set_action(v.."fadeamount", function(n)
+    -- TODO this function will also need to be called when changing the loop size - eventually won't use sync rate
+    -- also need to take into account whether we are using position changes or loop changes - don't want a long loop but short position
+    local sync_rate = params.lookup[v.."syncrate"] and params:get(v.."syncrate") or 1
+    local fade_time = sync_rate * n
+    sc.fade_time(v, fade_time)
+  end)
+  params:set(v.."fadeamount", defaults.FADE_AMOUNT)
+
+  params:add_separator("REC")
+
+  params:add_binary(v.."togglerec", "toggle rec (K3)", "toggle", 1)
+  params:set_action(v.."togglerec",function(x)
+    if x == 1 then
+      sc.rec_level(v, params:get(v.."reclevel"))
+      sc.pre_level(v, params:get(v.."prelevel"))
+    else
+      sc.rec_level(v, 0)
+      sc.pre_level(v, 1.0) -- preserve current buffer contents
+    end
+  end)
+
   params:add_control(v.."reclevel", "rec level", controlspec.UNIPOLAR)
   params:set(v.."reclevel", defaults.REC_LEVEL)
   params:set_action(v.."reclevel", function(n)
-    if voice.is_rec(v) then sc.rec_level(v, n) end -- only adjust value if already recording
+    if voice.is_rec(v) then sc.rec_level(v, n) end
   end)
 
   params:add_control(v.."prelevel", "pre level", controlspec.UNIPOLAR)
   params:set(v.."prelevel", defaults.PRE_LEVEL)
   params:set_action(v.."prelevel", function(n)
     if voice.is_rec(v) then sc.pre_level(v, n) end -- preserve all contents if not recording
+  end)
+
+  params:add_separator("FILTER")
+
+  params:add_binary(v.."togglefilter", "toggle filter (K3)", "toggle", 1)
+  params:set_action(v.."togglefilter",function(x)
+    if x == 1 then
+      local fc = params:get(v.."filter")
+      print(fc)
+      filter.translate_fc_to_filters(v, fc)
+    else
+      sc.post_filter_dry(v, 1)
+      sc.post_filter_lp(v, 0)
+      sc.post_filter_bp(v, 0)
+      sc.post_filter_hp(v, 0)
+    end
   end)
 
   params:add_number(v.."filter", "filter cutoff", -100, 100, 0)
@@ -110,18 +148,7 @@ function voice.init_params(v)
     sc.post_filter_rq(v, 1/n)
   end)
 
-  params:add_control(v.."fadeamount", "fade amount", controlspec.UNIPOLAR)
-  params:set_action(v.."fadeamount", function(n)
-    -- TODO this function will also need to be called when changing the loop size - eventually won't use ZONE_LENGTH constant
-    -- also need to take into account whether we are using position changes or loop changes - don't want a long loop but short position
-    -- local fade_time = sync_time(v)*n
-    -- FIXME
-    local fade_time = 0.1
-    sc.fade_time(v, fade_time) -- TODO fade time maps to clock rate
-  end)
-  params:set(v.."fadeamount", defaults.FADE_AMOUNT)
-
-  params:add_separator("TIME")
+  params:add_separator("LOOP")
 
   params:add_number(v.."zone", "buffer zone", 1, 4, v)
   params:set_action(v.."zone", function(n)
@@ -137,6 +164,8 @@ function voice.init_params(v)
   params:add_control(v.."position", "position", specs.zone_length)
   -- params:set_action(v.."position", function(n) sc.position(v, voice.zone_start(v)+n) end)
 
+  params:add_separator("CLOCK")
+
   -- TODO change test values
   params:add_control(v.."syncrate", "sync rate", specs.zone_length)
   params:set(v.."syncrate", v*3)
@@ -144,23 +173,6 @@ function voice.init_params(v)
   -- TODO change test values
   params:add_control(v.."syncoffset", "sync offset", specs.zone_length)
   params:set(v.."syncoffset", v*0.2)
-
-  params:add_separator("MUTATE")
-
-  params:add_binary(v.."togglerec", "toggle rec (K3)", "toggle", 1)
-  params:set_action(v.."togglerec",function(x)
-    if x == 1 then
-      sc.rec_level(v, params:get(v.."reclevel"))
-      sc.pre_level(v, params:get(v.."prelevel"))
-      -- TODO reenable after adding rate params
-      -- sc.rate(v, 1.0)
-    else
-      sc.rec_level(v, 0)
-      sc.pre_level(v, 1.0) -- preserve current buffer contents
-      -- TODO reenable after adding rate params
-      -- sc.rate(v, params:get(v.."rate")) -- allows for pitch shifting when playing back
-    end
-  end)
 
   params:add_separator("SENDS")
 
@@ -192,7 +204,6 @@ function voice.init_params(v)
   params:add_control(v.."rinputlevel", "ext input level R", controlspec.UNIPOLAR)
   params:set(v.."rinputlevel", defaults.INPUT_LEVEL)
   params:set_action(v.."rinputlevel", function(n) sc.level_input_cut(2, v, n) end)
-
 end
 
 function voice.init_actions(v)
