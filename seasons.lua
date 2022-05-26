@@ -5,6 +5,7 @@
 s = require 'sequins'
 voice = include 'lib/voice'
 actions = include 'lib/actions'
+filter=  include 'lib/filter'
 cr = include 'lib/crow'
 sc = softcut
 

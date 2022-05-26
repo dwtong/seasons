@@ -4,11 +4,11 @@ MIN_LOOP_SIZE = 0.05 -- 50ms/20hz
 
 voice = {}
 local defaults = {
-  PRE_LEVEL = 0.8,
+  PRE_LEVEL = 0.5,
   INPUT_LEVEL = 1.0,
   SEND_LEVEL = 0.0,
   REC_LEVEL = 1.0,
-  LEVEL = 0.7,
+  LEVEL = 0.5,
   FADE_AMOUNT = 0.25,
 }
 
@@ -63,18 +63,16 @@ function voice.init_softcut(v)
     if vdest ~= v then sc.level_cut_cut(v, vdest, defaults.SEND_LEVEL) end
   end
 
-  -- nice filter defaults from halfsecond
-  sc.pre_filter_dry(v, 0.125);
-  sc.pre_filter_fc(v, 1200);
-  sc.pre_filter_lp(v, 0.0);
-  sc.pre_filter_bp(v, 1.0);
-  sc.pre_filter_hp(v, 0.0);
-  sc.pre_filter_rq(v, 2.0);
+  sc.post_filter_rq(v, 1)
+  sc.post_filter_dry(v, 1)
+  sc.post_filter_bp(v, 0)
+  sc.post_filter_lp(v, 0)
+  sc.post_filter_hp(v, 0)
 end
 
 function voice.init_params(v)
   print("init voice "..v.." params")
-  params:add_group("voice "..v, 23)
+  params:add_group("voice "..v, 25)
 
   params:add_separator("SPACE")
 
@@ -102,6 +100,14 @@ function voice.init_params(v)
   params:set(v.."prelevel", defaults.PRE_LEVEL)
   params:set_action(v.."prelevel", function(n)
     if voice.is_rec(v) then sc.pre_level(v, n) end -- preserve all contents if not recording
+  end)
+
+  params:add_number(v.."filter", "filter cutoff", -100, 100, 0)
+  params:set_action(v.."filter", function(n) filter.translate_fc_to_filters(v, n) end)
+
+  params:add_number(v.."filterq", "filter resonance", 1, 100, 1)
+  params:set_action(v.."filterq", function(n)
+    sc.post_filter_rq(v, 1/n)
   end)
 
   params:add_control(v.."fadeamount", "fade amount", controlspec.UNIPOLAR)
