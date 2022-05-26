@@ -23,6 +23,8 @@ local specs = {
   }
 }
 
+local rates = { 0.25, 0.5, 1, 2, 4 }
+
 function voice.zone_start(v)
   -- FIXME surely this is inefficient
   zone = params.lookup[v.."zone"] and params:get(v.."zone") or v
@@ -83,9 +85,8 @@ function voice.init_params(v)
   params:set(v.."pan", pans[v])
 
   -- TODO rec_rate and play_rate - option for play_rate to follow rec_rate
-  -- params:add_option(v.."rate", v.." rate", rates, 10)
-  params:add_control(v.."rate", "rate", controlspec.PAN)
-  params:set_action(v.."rate", function(n) sc.rate(v, n) end)
+  params:add_option(v.."rate", "play rate", rates, 3)
+  params:set_action(v.."rate", function(n) sc.rate(v, rates[n]) end)
 
   params:add_control(v.."level", "level", controlspec.UNIPOLAR)
   params:set(v.."level", defaults.LEVEL)
