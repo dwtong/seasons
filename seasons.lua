@@ -83,11 +83,13 @@ end
 
 function flip_rate(v)
   -- for v=1, #voices do
-  local rate = params:get(v.."rate")
-  sc.rate(v, -rate)
+  -- this won't work currently, need octave + semitone rate
+  -- local rate = params:get(v.."rate")
+  -- sc.rate(v, -rate)
   -- end
 end
 
+-- thanks @tyleretters
 function r()
   norns.script.load(norns.state.script)
 end

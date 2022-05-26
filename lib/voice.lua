@@ -17,13 +17,8 @@ local specs = {
     min=0, max=ZONE_LENGTH, warp='lin', step=0.0001,
     default=0, quantum=0.0001, wrap=false, units='s'
   },
-  loop_length = controlspec.def{
-    min=0.01, max=ZONE_LENGTH, warp='lin', step=0.0001,
-    default=ZONE_LENGTH, quantum=0.0001, wrap=false, units='s'
-  }
 }
 
-local rates = { 0.25, 0.5, 1, 2, 4 }
 
 function voice.zone_start(v)
   -- FIXME surely this is inefficient
@@ -72,7 +67,7 @@ end
 
 function voice.init_params(v)
   print("init voice "..v.." params")
-  params:add_group("voice "..v, 28)
+  params:add_group("voice "..v, 31)
 
   params:add_separator("PLAY")
 
@@ -86,8 +81,20 @@ function voice.init_params(v)
   params:set(v.."level", defaults.LEVEL)
   params:set_action(v.."level", function(n) sc.level(v, n) end)
 
-  params:add_option(v.."rate", "rate", rates, 3)
-  params:set_action(v.."rate", function(n) sc.rate(v, rates[n]) end)
+  params:add_number(v.."rate", "rate", 0.125, 16, 1)
+  params:hide(v.."rate")
+  params:set_action(v.."rate", function(n) sc.rate(v, n) end)
+
+  local function set_rate(oct, semi)
+    local rate = 2^oct + 1/12*semi
+    params:set(v.."rate", rate)
+  end
+
+  params:add_number(v.."rateoct", "rate (+oct)", -3, 3, 0)
+  params:set_action(v.."rateoct", function(n) set_rate(n, params:get(v.."ratesemi")) end)
+
+  params:add_number(v.."ratesemi", "rate (+semi)", 0, 11, 0)
+  params:set_action(v.."ratesemi", function(n) set_rate(params:get(v.."rateoct"), n) end)
 
   params:add_control(v.."fadeamount", "fade amount", controlspec.UNIPOLAR)
   params:set_action(v.."fadeamount", function(n)
@@ -150,6 +157,9 @@ function voice.init_params(v)
 
   params:add_separator("LOOP")
 
+  params:add_binary(v.."toggleloop", "toggle loop (K3)", "toggle", 1)
+  params:set_action(v.."toggleloop",function(x) sc.loop(v, x) end)
+
   params:add_number(v.."zone", "buffer zone", 1, 4, v)
   params:set_action(v.."zone", function(n)
     sc.position(v, voice.zone_start(n))
@@ -157,12 +167,19 @@ function voice.init_params(v)
     sc.loop_end(v, voice.zone_end(n))
   end)
 
-  -- TODO relationship of loop start/end to position
-  params:add_control(v.."looplength","loop length", specs.loop_length)
-  params:set_action(v.."looplength", function(n) sc.loop_end(v, voice.zone_start(v)+n) end)
+  params:add_control(v.."loopstart", "loop start", specs.zone_length)
+  params:set_action(v.."loopstart", function(n)
+    local loop_start = voice.zone_start(v)+n
+    sc.loop_start(v, loop_start)
+    sc.loop_end(v, loop_start+params:get(v.."looplength"))
+  end)
 
-  params:add_control(v.."position", "position", specs.zone_length)
-  -- params:set_action(v.."position", function(n) sc.position(v, voice.zone_start(v)+n) end)
+  params:add_control(v.."looplength","loop length", specs.zone_length)
+  params:set_action(v.."looplength", function(n)
+    if n == 0 then n = 0.1 end -- can't have a loop with no length
+    sc.loop_end(v, params:get(v.."loopstart")+n)
+  end)
+
 
   params:add_separator("CLOCK")
 
@@ -213,7 +230,7 @@ function voice.init_actions(v)
   -- rate_fn = s{v, v, v, v*4}
 
   action_fn = function ()
-    local pos = voice.zone_start(v) + params:get(v.."position")
+    local pos = voice.zone_start(v) + params:get(v.."loopstart")
     sc.position(v, pos)
   end
 
