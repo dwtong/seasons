@@ -78,7 +78,7 @@ end
 
 function voice.init_params(v)
   print("init voice "..v.." params")
-  params:add_group("voice "..v.." params", 35)
+  params:add_group("voice "..v.." params", 36)
 
   params:add_separator("PLAY")
 
@@ -185,6 +185,12 @@ function voice.init_params(v)
     sc.position(v, voice.zone_start(n))
     sc.loop_start(v, voice.zone_start(n))
     sc.loop_end(v, voice.zone_end(n))
+  end)
+
+  params:add_trigger(v.."clearzone", "clear buffer zone")
+  params:set_action(v.."clearzone", function()
+    local z = params:get(v.."zone")
+    sc.buffer_clear_region_channel(1, voice.zone_start(z) - ROLL_LENGTH, ZONE_LENGTH + 2 * ROLL_LENGTH, 1, 0)
   end)
 
   params:add_control(v.."loopstart", "loop start", spec.ZONE_START)
