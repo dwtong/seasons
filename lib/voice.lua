@@ -8,17 +8,24 @@ local defaults = {
   INPUT_LEVEL = 1.0,
   SEND_LEVEL = 0.0,
   REC_LEVEL = 1.0,
-  LEVEL = 0.6,
+  LEVEL = 0.0,
   FADE_AMOUNT = 0.25,
 }
 
-local specs = {
-  zone_length = controlspec.def{
-    min=0, max=ZONE_LENGTH, warp='lin', step=0.0001,
-    default=0, quantum=0.0001, wrap=false, units='s'
+local spec = {
+  ZONE_START = controlspec.def{
+    min=0, max=ZONE_LENGTH, warp='lin', step=0.1,
+    default=0, quantum=0.001, wrap=false, units='s'
   },
+  ZONE_LENGTH = controlspec.def{
+    min=0.1, max=ZONE_LENGTH, warp='lin', step=0.1,
+    default=ZONE_LENGTH, quantum=0.001, wrap=false, units='s'
+  },
+  FADE_TIME = controlspec.def{
+    min=0, max=10, warp='lin', step=0.1,
+    default=0.5, quantum=0.001, wrap=false, units='s'
+  }
 }
-
 
 function voice.zone_start(v)
   -- FIXME surely this is inefficient
@@ -96,15 +103,8 @@ function voice.init_params(v)
   params:add_number(v.."ratesemi", "rate (+semi)", 0, 11, 0)
   params:set_action(v.."ratesemi", function(n) set_rate(params:get(v.."rateoct"), n) end)
 
-  params:add_control(v.."fadeamount", "fade amount", controlspec.UNIPOLAR)
-  params:set_action(v.."fadeamount", function(n)
-    -- TODO this function will also need to be called when changing the loop size - eventually won't use sync rate
-    -- also need to take into account whether we are using position changes or loop changes - don't want a long loop but short position
-    local sync_rate = params.lookup[v.."syncrate"] and params:get(v.."syncrate") or 1
-    local fade_time = sync_rate * n
-    sc.fade_time(v, fade_time)
-  end)
-  params:set(v.."fadeamount", defaults.FADE_AMOUNT)
+  params:add_control(v.."fadetime", "fade time", spec.FADE_TIME)
+  params:set_action(v.."fadetime", function(n) sc.fade_time(v, n) end)
 
   params:add_separator("REC")
 
@@ -167,16 +167,15 @@ function voice.init_params(v)
     sc.loop_end(v, voice.zone_end(n))
   end)
 
-  params:add_control(v.."loopstart", "loop start", specs.zone_length)
+  params:add_control(v.."loopstart", "loop start", spec.ZONE_START)
   params:set_action(v.."loopstart", function(n)
     local loop_start = voice.zone_start(v)+n
     sc.loop_start(v, loop_start)
     sc.loop_end(v, loop_start+params:get(v.."looplength"))
   end)
 
-  params:add_control(v.."looplength","loop length", specs.zone_length)
+  params:add_control(v.."looplength","loop length", spec.ZONE_LENGTH)
   params:set_action(v.."looplength", function(n)
-    if n == 0 then n = 0.1 end -- can't have a loop with no length
     sc.loop_end(v, params:get(v.."loopstart")+n)
   end)
 
@@ -184,11 +183,11 @@ function voice.init_params(v)
   params:add_separator("CLOCK")
 
   -- TODO change test values
-  params:add_control(v.."syncrate", "sync rate", specs.zone_length)
+  params:add_control(v.."syncrate", "sync rate", spec.ZONE_LENGTH)
   params:set(v.."syncrate", v*3)
 
   -- TODO change test values
-  params:add_control(v.."syncoffset", "sync offset", specs.zone_length)
+  params:add_control(v.."syncoffset", "sync offset", spec.ZONE_LENGTH)
   params:set(v.."syncoffset", v*0.2)
 
   params:add_separator("SENDS")
