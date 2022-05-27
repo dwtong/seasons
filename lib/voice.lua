@@ -8,7 +8,7 @@ local defaults = {
   INPUT_LEVEL = 1.0,
   SEND_LEVEL = 0.0,
   REC_LEVEL = 1.0,
-  LEVEL = 0.0,
+  LEVEL = 0.5,
   FADE_AMOUNT = 0.25,
 }
 
@@ -196,8 +196,9 @@ function voice.init_params(v)
   params:add_control(v.."loopstart", "loop start", spec.ZONE_START)
   params:set_action(v.."loopstart", function(n)
     local loop_start = voice.zone_start(v)+n
+    local loop_end = loop_start+params:get(v.."looplength")
     sc.loop_start(v, loop_start)
-    sc.loop_end(v, loop_start+params:get(v.."looplength"))
+    sc.loop_end(v, loop_end)
   end)
 
   params:add_control(v.."looplength","loop length", spec.ZONE_LENGTH)
