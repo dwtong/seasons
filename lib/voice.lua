@@ -23,8 +23,12 @@ local spec = {
   },
   FADE_TIME = controlspec.def{
     min=0, max=10, warp='lin', step=0.1,
-    default=0.5, quantum=0.001, wrap=false, units='s'
-  }
+    default=0.5, quantum=0.01, wrap=false, units='s'
+  },
+  SLEW = controlspec.def{
+    min=0, max=60, warp='lin', step=0.1,
+    default=0.0, quantum=0.001, wrap=false, units='s'
+  },
 }
 
 function voice.zone_start(v)
@@ -74,9 +78,16 @@ end
 
 function voice.init_params(v)
   print("init voice "..v.." params")
-  params:add_group("voice "..v, 31)
+  params:add_group("voice "..v.." params", 35)
 
   params:add_separator("PLAY")
+
+  params:add_control(v.."level", "level", controlspec.UNIPOLAR)
+  params:set(v.."level", defaults.LEVEL)
+  params:set_action(v.."level", function(n) sc.level(v, n) end)
+
+  params:add_control(v.."levelslew", "level slew", spec.SLEW)
+  params:set_action(v.."levelslew", function(n) sc.level_slew_time(v, n) end)
 
   params:add_control(v.."pan", "pan", controlspec.PAN)
   params:set_action(v.."pan", function(n) sc.pan(v, n) end)
@@ -84,24 +95,30 @@ function voice.init_params(v)
   pans = {-1.0, -0.5, 0.5, 1}
   params:set(v.."pan", pans[v])
 
-  params:add_control(v.."level", "level", controlspec.UNIPOLAR)
-  params:set(v.."level", defaults.LEVEL)
-  params:set_action(v.."level", function(n) sc.level(v, n) end)
+  params:add_control(v.."panslew", "pan slew", spec.SLEW)
+  params:set_action(v.."panslew", function(n) sc.pan_slew_time(v, n) end)
 
   params:add_number(v.."rate", "rate", 0.125, 16, 1)
   params:hide(v.."rate")
   params:set_action(v.."rate", function(n) sc.rate(v, n) end)
 
-  local function set_rate(oct, semi)
-    local rate = 2^oct + 1/12*semi
+  local function set_rate(oct, semi, detune)
+    oct = 2^oct
+    local rate = oct + 1/12*semi*oct + 0.1*detune*oct
     params:set(v.."rate", rate)
   end
 
   params:add_number(v.."rateoct", "rate (+oct)", -3, 3, 0)
-  params:set_action(v.."rateoct", function(n) set_rate(n, params:get(v.."ratesemi")) end)
+  params:set_action(v.."rateoct", function(n) set_rate(n, params:get(v.."ratesemi"), params:get(v.."ratedetune")) end)
 
   params:add_number(v.."ratesemi", "rate (+semi)", 0, 11, 0)
-  params:set_action(v.."ratesemi", function(n) set_rate(params:get(v.."rateoct"), n) end)
+  params:set_action(v.."ratesemi", function(n) set_rate(params:get(v.."rateoct"), n, params:get(v.."ratedetune")) end)
+
+  params:add_number(v.."ratedetune", "rate (+detune)", 0, 100, 0)
+  params:set_action(v.."ratedetune", function(n) set_rate(params:get(v.."rateoct"), params:get(v.."ratesemi"), n) end)
+
+  params:add_control(v.."rateslew", "rate slew", spec.SLEW)
+  params:set_action(v.."rateslew", function(n) sc.rate_slew_time(v, n) end)
 
   params:add_control(v.."fadetime", "fade time", spec.FADE_TIME)
   params:set_action(v.."fadetime", function(n) sc.fade_time(v, n) end)
@@ -130,6 +147,9 @@ function voice.init_params(v)
   params:set_action(v.."prelevel", function(n)
     if voice.is_rec(v) then sc.pre_level(v, n) end -- preserve all contents if not recording
   end)
+
+  params:add_control(v.."recslew", "rec/pre slew", spec.SLEW)
+  params:set_action(v.."recslew", function(n) sc.recpre_slew_time(v, n) end)
 
   params:add_separator("FILTER")
 
