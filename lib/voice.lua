@@ -78,7 +78,7 @@ end
 
 function voice.init_params(v)
   print("init voice "..v.." params")
-  params:add_group("voice "..v.." params", 36)
+  params:add_group("voice "..v.." params", 38)
 
   params:add_separator("PLAY")
 
@@ -157,8 +157,7 @@ function voice.init_params(v)
   params:set_action(v.."togglefilter",function(x)
     if x == 1 then
       local fc = params:get(v.."filter")
-      print(fc)
-      filter.translate_fc_to_filters(v, fc)
+      filter.cutoff(v, fc)
     else
       sc.post_filter_dry(v, 1)
       sc.post_filter_lp(v, 0)
@@ -168,12 +167,15 @@ function voice.init_params(v)
   end)
 
   params:add_number(v.."filter", "filter cutoff", -100, 100, 0)
-  params:set_action(v.."filter", function(n) filter.translate_fc_to_filters(v, n) end)
+  params:set_action(v.."filter", function(n) filter.cutoff(v, n) end)
 
   params:add_number(v.."filterq", "filter resonance", 1, 100, 1)
   params:set_action(v.."filterq", function(n)
     sc.post_filter_rq(v, 1/n)
   end)
+
+  params:add_control(v.."filterslew", "filter slew", spec.SLEW)
+  params:set_action(v.."filterslew", function(n) filter.slew_time(v, n) end)
 
   params:add_separator("LOOP")
 
