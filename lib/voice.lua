@@ -8,7 +8,7 @@ local defaults = {
   INPUT_LEVEL = 1.0,
   SEND_LEVEL = 0.0,
   REC_LEVEL = 1.0,
-  LEVEL = 0.5,
+  LEVEL = 0.0,
   FADE_AMOUNT = 0.25,
 }
 
@@ -83,14 +83,20 @@ function voice.init_params(v)
   params:add_separator("PLAY")
 
   params:add_control(v.."level", "level", controlspec.UNIPOLAR)
+  params:set_action(v.."level", function(n)
+    sc.level(v, n)
+    param_callback(v.."level", n)
+  end)
   params:set(v.."level", defaults.LEVEL)
-  params:set_action(v.."level", function(n) sc.level(v, n) end)
 
   params:add_control(v.."levelslew", "level slew", spec.SLEW)
   params:set_action(v.."levelslew", function(n) sc.level_slew_time(v, n) end)
 
   params:add_control(v.."pan", "pan", controlspec.PAN)
-  params:set_action(v.."pan", function(n) sc.pan(v, n) end)
+  params:set_action(v.."pan", function(n)
+    sc.pan(v, n)
+    param_callback(v.."pan", n)
+  end)
   -- FIXME for testing
   pans = {-1.0, -0.5, 0.5, 1}
   params:set(v.."pan", pans[v])
@@ -109,7 +115,10 @@ function voice.init_params(v)
   end
 
   params:add_number(v.."rateoct", "rate (+oct)", -3, 3, 0)
-  params:set_action(v.."rateoct", function(n) set_rate(n, params:get(v.."ratesemi"), params:get(v.."ratedetune")) end)
+  params:set_action(v.."rateoct", function(n)
+    set_rate(n, params:get(v.."ratesemi"), params:get(v.."ratedetune"))
+    param_callback(v.."rateoct", n)
+  end)
 
   params:add_number(v.."ratesemi", "rate (+semi)", 0, 11, 0)
   params:set_action(v.."ratesemi", function(n) set_rate(params:get(v.."rateoct"), n, params:get(v.."ratedetune")) end)
@@ -167,7 +176,10 @@ function voice.init_params(v)
   end)
 
   params:add_number(v.."filter", "filter cutoff", -100, 100, 0)
-  params:set_action(v.."filter", function(n) filter.cutoff(v, n) end)
+  params:set_action(v.."filter", function(n)
+    filter.cutoff(v, n)
+    param_callback(v.."filter", n)
+  end)
 
   params:add_number(v.."filterq", "filter resonance", 1, 100, 1)
   params:set_action(v.."filterq", function(n)

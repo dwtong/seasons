@@ -5,7 +5,8 @@
 s = require 'sequins'
 voice = include 'lib/voice'
 actions = include 'lib/actions'
-filter=  include 'lib/filter'
+faderfox = include 'lib/faderfox'
+filter = include 'lib/filter'
 cr = include 'lib/crow'
 sc = softcut
 
@@ -13,6 +14,8 @@ VOICE_COUNT = 4
 voices = {}
 
 function init()
+  faderfox.init()
+
   sc.buffer_clear()
   audio.level_cut(1)
   audio.level_adc_cut(1)
@@ -29,11 +32,17 @@ function init()
   end
 
   norns.crow.add = cr.init() -- crow
+
+  faderfox.init_values()
 end
 
 function update_position(v, pos)
   voices[v].position = pos - 1
   redraw()
+end
+
+function param_callback(param_id, new_value)
+  faderfox.echo(param_id, new_value)
 end
 
 -- callback functions can be sequins, or other functions that return values
