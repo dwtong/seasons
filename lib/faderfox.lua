@@ -32,8 +32,7 @@ local function init()
   for i=1,16 do
     if midi.vports[i] and midi.vports[i].name == "Faderfox EC4" then
       print("connecting faderfox")
-      -- FIXME don't hardcode this to midi device one
-      ff = midi.connect()
+      ff = midi.connect(midi.vports[i].id)
       connected = true
     end
   end
@@ -41,24 +40,23 @@ local function init()
 end
 
 local function echo(param_id, new_value)
-  if connected then
-    local p_voice = string.sub(param_id, 1, 1)
-    local p_name = string.sub(param_id, 2, -1)
-    local range = params:get_range(param_id)
-    local val = math.floor(util.linlin(range[1], range[2], 0, 127, new_value))
+  local p_name = string.sub(param_id, 2, -1)
+  local midi_channel = string.sub(param_id, 1, 1)
+  local midi_cc = cc_map[p_name]
 
-    -- cc, value, midi channel
-    ff:cc(cc_map[p_name], val, p_voice)
+  if connected and midi_cc then
+    local range = params:get_range(param_id)
+    local value = math.floor(util.linlin(range[1], range[2], 0, 127, new_value))
+
+    ff:cc(midi_cc, value, midi_channel)
   end
 end
 
 local function init_values()
   if connected then
-    print("attempting to init values")
-    print(cc_map)
+    print("init faderfox values")
     for name, cc in pairs(cc_map) do
       for v=1, VOICE_COUNT do
-        print("init "..name..v)
         local param_id = v..name
         local new_value = params:get(param_id)
         echo(param_id, new_value)
