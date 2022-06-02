@@ -1,13 +1,28 @@
 ff = {}
 cc_map = {
+  -- ff group 1
   level = 1,
   pan = 2,
   prelevel = 3,
   sendlevelall = 4,
+
+  -- ff group 2
   loopstart = 5,
   looplength = 6,
   fadetime = 7,
   clockoffset = 8,
+
+  -- ff group 3
+  filter = 9,
+  filterq = 10,
+  filterslew = 11,
+  -- filtertype = 12,
+
+  -- ff group 4
+  levelslew = 13,
+  recslew = 14,
+  panslew = 15,
+  -- rateslew = 16,
 }
 
 local connected = false

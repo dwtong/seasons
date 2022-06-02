@@ -39,7 +39,7 @@ local spec = {
   },
   SLEW = controlspec.def{
     min=0, max=60, warp='lin', step=0.1,
-    default=0.1, quantum=0.001, wrap=false, units='s'
+    default=0.5, quantum=0.001, wrap=false, units='s'
   },
   RESONANCE = controlspec.def{
     min=1, max=100, warp='exp', step=0.1,
@@ -106,7 +106,10 @@ function voice.init_params(v)
   params:set(v.."level", defaults.LEVEL)
 
   params:add_control(v.."levelslew", "level slew", spec.SLEW)
-  params:set_action(v.."levelslew", function(n) sc.level_slew_time(v, n) end)
+  params:set_action(v.."levelslew", function(n)
+    sc.level_slew_time(v, n)
+    param_callback(v.."levelslew", n)
+  end)
 
   params:add_control(v.."pan", "pan", controlspec.PAN)
   params:set_action(v.."pan", function(n)
@@ -118,7 +121,10 @@ function voice.init_params(v)
   params:set(v.."pan", pans[v])
 
   params:add_control(v.."panslew", "pan slew", spec.SLEW)
-  params:set_action(v.."panslew", function(n) sc.pan_slew_time(v, n) end)
+  params:set_action(v.."panslew", function(n)
+    sc.pan_slew_time(v, n)
+    param_callback(v.."panslew", n)
+  end)
 
   params:add_number(v.."rate", "rate", 0.125, 16, 1)
   params:hide(v.."rate")
@@ -143,7 +149,10 @@ function voice.init_params(v)
   params:set_action(v.."ratedetune", function(n) set_rate(params:get(v.."rateoct"), params:get(v.."ratesemi"), n) end)
 
   params:add_control(v.."rateslew", "rate slew", spec.SLEW)
-  params:set_action(v.."rateslew", function(n) sc.rate_slew_time(v, n) end)
+  params:set_action(v.."rateslew", function(n)
+    sc.rate_slew_time(v, n)
+    param_callback(v.."rateslew", n)
+  end)
 
   params:add_separator("REC")
 
@@ -172,7 +181,10 @@ function voice.init_params(v)
   end)
 
   params:add_control(v.."recslew", "rec/pre slew", spec.SLEW)
-  params:set_action(v.."recslew", function(n) sc.recpre_slew_time(v, n) end)
+  params:set_action(v.."recslew", function(n)
+    sc.recpre_slew_time(v, n)
+    param_callback(v.."recslew", n)
+  end)
 
   params:add_separator("FILTER")
 
