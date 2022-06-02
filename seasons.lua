@@ -10,9 +10,6 @@ filter = include 'lib/filter'
 _crow = include 'lib/crow'
 sc = softcut
 
--- testing
-offset = 0
-
 VOICE_COUNT = 4
 voices = {}
 
@@ -41,7 +38,7 @@ function init()
         local offset = params:get(v.."clockoffset")
         local clamped_sync = util.clamp(sync * mult + offset, 0.001, 100)
         clock.sync(clamped_sync)
-        actions.reset_loop(v)
+        actions.reset_loop(v, clamped_sync)
       end
     end)
   end
@@ -58,6 +55,10 @@ function init()
       faderfox.init_values()
     end
   end
+
+  -- testing
+  sync = s{1, 1/2, s{s{1}:count(2),2}, s{1/4}:count(4)}
+  cjf = clock.run(function() while true do actions.play_note(sca, oct, vel); clock.sync(sync()) end end)
 end
 
 function update_position(v, pos)
@@ -76,6 +77,12 @@ function enc(n, d)
     delta_all("filter", d)
   elseif n == 3 then
     delta_all("prelevel", d)
+  end
+end
+
+function key(k, z)
+  if k == 2 then
+    params:set("1ratereverse", z)
   end
 end
 

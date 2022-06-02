@@ -126,27 +126,35 @@ function voice.init_params(v)
     param_callback(v.."panslew", n)
   end)
 
-  params:add_number(v.."rate", "rate", 0.125, 16, 1)
+  params:add_number(v.."rate", "rate", -16, 16, 1)
   params:hide(v.."rate")
-  params:set_action(v.."rate", function(n) sc.rate(v, n) end)
-
-  local function set_rate(oct, semi, detune)
-    oct = 2^oct
-    local rate = oct + 1/12*semi*oct + 0.1*detune*oct
-    params:set(v.."rate", rate)
-  end
-
-  params:add_number(v.."rateoct", "rate (+oct)", -3, 3, 0)
-  params:set_action(v.."rateoct", function(n)
-    set_rate(n, params:get(v.."ratesemi"), params:get(v.."ratedetune"))
-    param_callback(v.."rateoct", n)
+  params:set_action(v.."rate", function(n)
+    print("set rate "..v.." to "..n)
+    sc.rate(v, n)
   end)
 
+  local function set_rate(callback_param)
+    -- FIXME probably incorrect calculations
+    local oct = 2^params:get(v.."rateoct")
+    local semi = 1/12*params:get(v.."ratesemi")*oct
+    local detune = 0.1*params:get(v.."ratedetune")*oct
+    local reverse = params:get(v.."ratereverse") == 1 and -1 or 1
+    local rate = (oct + semi + detune) * reverse
+    params:set(v.."rate", rate)
+    param_callback(v..callback_param, n)
+  end
+
+  params:add_binary(v.."ratereverse", "toggle reverse (K3)", "toggle", 0)
+  params:set_action(v.."ratereverse", function(n) set_rate("ratereverse") end)
+
+  params:add_number(v.."rateoct", "rate (+oct)", -3, 3, 0)
+  params:set_action(v.."rateoct", function(n) set_rate("rateoct") end)
+
   params:add_number(v.."ratesemi", "rate (+semi)", 0, 11, 0)
-  params:set_action(v.."ratesemi", function(n) set_rate(params:get(v.."rateoct"), n, params:get(v.."ratedetune")) end)
+  params:set_action(v.."ratesemi", function(n) set_rate("ratesemi") end)
 
   params:add_number(v.."ratedetune", "rate (+detune)", 0, 100, 0)
-  params:set_action(v.."ratedetune", function(n) set_rate(params:get(v.."rateoct"), params:get(v.."ratesemi"), n) end)
+  params:set_action(v.."ratedetune", function(n) set_rate("ratedetune") end)
 
   params:add_control(v.."rateslew", "rate slew", spec.SLEW)
   params:set_action(v.."rateslew", function(n)
@@ -166,6 +174,16 @@ function voice.init_params(v)
       sc.pre_level(v, 1.0) -- preserve current buffer contents
     end
   end)
+
+  -- params:add_binary(v.."freeze", "freeze (K3)", "momentary", 0)
+  -- params:set_action(v.."freeze",function(x)
+  --   if x == 1 then
+  --     -- set loop start, end to within x of current position
+  --     -- somehow deal with position resets from clock
+  --   else
+  --     -- restore previous loop, position sync settings
+  --   end
+  -- end)
 
   params:add_control(v.."reclevel", "rec level", controlspec.UNIPOLAR)
   params:set(v.."reclevel", defaults.REC_LEVEL)
@@ -210,15 +228,27 @@ function voice.init_params(v)
   params:add_control(v.."filterq", "filter resonance", spec.RESONANCE)
   params:set_action(v.."filterq", function(n)
     sc.post_filter_rq(v, 1/n)
+    param_callback(v.."filterq", n)
   end)
 
+  -- FIXME default needs to be > 0
   params:add_control(v.."filterslew", "filter slew", spec.SLEW)
-  params:set_action(v.."filterslew", function(n) filter.slew_time(v, n) end)
+  params:set_action(v.."filterslew", function(n)
+    filter.slew_time(v, n)
+    param_callback(v.."filterslew", n)
+  end)
+
 
   params:add_separator("LOOP")
 
-  params:add_binary(v.."toggleloop", "toggle loop (K3)", "toggle", 1)
-  params:set_action(v.."toggleloop",function(x) sc.loop(v, x) end)
+  -- params:add_binary(v.."toggleloop", "toggle loop (K3)", "toggle", 1)
+  -- params:set_action(v.."toggleloop",function(x)
+  --   sc.loop(v, x)
+  --   if x == 1 then
+  --     -- FIXME ugh, do this a better way so it doesn't reset playhead position and loop
+  --     params:set(v.."zone", params:get(v.."zone"))
+  --   end
+  -- end)
 
   params:add_number(v.."zone", "buffer zone", 1, 4, v)
   params:set_action(v.."zone", function(n)
