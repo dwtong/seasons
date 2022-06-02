@@ -3,25 +3,27 @@ cc_map = {
   level = 1,
   pan = 2,
   prelevel = 3,
-  filter = 4,
+  sendlevelall = 4,
   rateoct = 5
 }
 
+local connected = false
 
 local function init()
   -- workaround: sometimes midi.devices table has empty values, so #midi.devices doesn't work
   for i=1,16 do
-    if midi.devices[i] and midi.devices[i].name == "Faderfox EC4" then
+    if midi.vports[i] and midi.vports[i].name == "Faderfox EC4" then
       print("connecting faderfox")
       -- FIXME don't hardcode this to midi device one
       ff = midi.connect()
+      connected = true
     end
   end
 
 end
 
 local function echo(param_id, new_value)
-  if ff then
+  if connected then
     local p_voice = string.sub(param_id, 1, 1)
     local p_name = string.sub(param_id, 2, -1)
     local range = params:get_range(param_id)
@@ -33,7 +35,7 @@ local function echo(param_id, new_value)
 end
 
 local function init_values()
-  if ff then
+  if connected then
     print("attempting to init values")
     print(cc_map)
     for name, cc in pairs(cc_map) do

@@ -36,16 +36,27 @@ function init()
     -- testing
     clock.run(function()
       while true do
-        clock.sync(params:get(v.."syncrate"), -params:get(v.."syncoffset"))
+        local sync = sync_rates[params:get(v.."syncrate")]
+        local offset = params:get(v.."syncoffset")
+        sync = util.clamp(sync, 0.001, 100)
+        clock.sync(sync + offset)
         actions.reset_loop(v)
       end
     end)
   end
 
+  -- echo values to faderfox after setting up voice params
+  faderfox.init_values()
+
   norns.crow.add = _crow.init -- crow
   _crow.init()
 
-  faderfox.init_values()
+  midi.add = function(device)
+    if device.name == "Faderfox EC4" then
+      faderfox.init()
+      faderfox.init_values()
+    end
+  end
 end
 
 function update_position(v, pos)
@@ -63,7 +74,7 @@ function enc(n, d)
   elseif n == 2 then
     delta_all("filter", d)
   elseif n == 3 then
-    delta_all("pan", d)
+    delta_all("prelevel", d)
   end
 end
 

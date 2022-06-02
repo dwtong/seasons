@@ -12,8 +12,8 @@ local defaults = {
   FADE_AMOUNT = 0.25,
 }
 
-local sync_rates = {
-  1/16,
+sync_rates = {
+  1/12,
   1/8,
   1/4,
   1/2,
@@ -248,26 +248,27 @@ function voice.init_params(v)
     params:set(v.."fadetime", sync_rates[n]/2)
   end)
 
-  params:add_control(v.."syncoffset", "sync offset", controlspec.UNIPOLAR)
+  params:add_control(v.."syncoffset", "sync offset", controlspec.BIPOLAR)
 
   params:add_separator("SENDS")
 
-  params:add_control(v.."levelcutcutall", "send to all level", controlspec.UNIPOLAR)
-  params:set(v.."levelcutcutall", defaults.SEND_LEVEL)
-  params:set_action(v.."levelcutcutall", function(n)
+  params:add_control(v.."sendlevelall", "send to all level", controlspec.UNIPOLAR)
+  params:set(v.."sendlevelall", defaults.SEND_LEVEL)
+  params:set_action(v.."sendlevelall", function(n)
     for vdest=1, VOICE_COUNT do
       if vdest ~= v then
-        params:set(v.."levelcutcut"..vdest, n)
+        params:set(v.."sendlevel"..vdest, n)
         if norns.menu.status() then _menu.rebuild_params() end
       end
     end
+    param_callback(v.."sendlevelall", n)
   end)
 
   for vdest=1, VOICE_COUNT do
     if vdest ~= v then
-      params:add_control(v.."levelcutcut"..vdest, "send to voice "..vdest.." level", controlspec.UNIPOLAR)
-      params:set(v.."levelcutcut"..vdest, defaults.SEND_LEVEL)
-      params:set_action(v.."levelcutcut"..vdest, function(n) sc.level_cut_cut(v, vdest, n) end)
+      params:add_control(v.."sendlevel"..vdest, "send to voice "..vdest.." level", controlspec.UNIPOLAR)
+      params:set(v.."sendlevel"..vdest, defaults.SEND_LEVEL)
+      params:set_action(v.."sendlevel"..vdest, function(n) sc.level_cut_cut(v, vdest, n) end)
     end
   end
 
