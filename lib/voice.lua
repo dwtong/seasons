@@ -42,6 +42,10 @@ local spec = {
     min=0, max=60, warp='lin', step=0.1,
     default=0.0, quantum=0.001, wrap=false, units='s'
   },
+  RESONANCE = controlspec.def{
+    min=1, max=100, warp='exp', step=0.1,
+    default=1, quantum=0.01, wrap=false
+  },
 }
 
 function voice.zone_start(v)
@@ -195,7 +199,7 @@ function voice.init_params(v)
     param_callback(v.."filter", n)
   end)
 
-  params:add_number(v.."filterq", "filter resonance", 1, 100, 1)
+  params:add_control(v.."filterq", "filter resonance", spec.RESONANCE)
   params:set_action(v.."filterq", function(n)
     sc.post_filter_rq(v, 1/n)
   end)
