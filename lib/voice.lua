@@ -40,7 +40,7 @@ local spec = {
   },
   SLEW = controlspec.def{
     min=0, max=60, warp='lin', step=0.1,
-    default=0.0, quantum=0.001, wrap=false, units='s'
+    default=0.1, quantum=0.001, wrap=false, units='s'
   },
   RESONANCE = controlspec.def{
     min=1, max=100, warp='exp', step=0.1,
