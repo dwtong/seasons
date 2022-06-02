@@ -1,6 +1,8 @@
-local trig_text = false
+_crow = {}
 
-local function init()
+_crow.trig_text = false
+
+function _crow.init()
   crow.reset()
   print("init crow")
   crow.input[1].mode("change", 2.0, 0.25, "rising")
@@ -8,15 +10,12 @@ local function init()
 end
 
 crow.input[1].change = function()
-  cr.trig_text = true
+  trig_text = true
   redraw()
   clock.sleep(0.2)
-  cr.trig_text = false
+  trig_text = false
   redraw()
 end
 
 
-return {
-  init = init,
-  trig_text = trig_text
-}
+return _crow

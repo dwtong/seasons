@@ -1,6 +1,8 @@
 --- multimode/dj style morphing filter for softcut
 --- thanks for the help @dan_derks
 
+filter = {}
+
 local SC_VOICES = 6 -- softcut supports 6 voices
 local FC_STEPS = 200 -- 200 steps from lowest to highest filter cutoff
 local SLEW_FPS = 10 -- frames per second for slew
@@ -57,7 +59,7 @@ local function apply_filter_cutoff(voice, fc_pos)
   end
 end
 
-local function cutoff(voice, new_value)
+function filter.cutoff(voice, new_value)
   local f = voices[voice]
   local sleep = f.slew_time/FC_STEPS * 1/SLEW_FPS
   local inc = 1/SLEW_FPS
@@ -81,11 +83,8 @@ local function cutoff(voice, new_value)
   end
 end
 
-local function slew_time(voice, slew_time)
+function filter.slew_time(voice, slew_time)
   voices[voice].slew_time = slew_time
 end
 
-return {
-  cutoff = cutoff,
-  slew_time = slew_time
-}
+return filter

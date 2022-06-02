@@ -1,4 +1,4 @@
-ff = {}
+faderfox = {}
 cc_map = {
   -- ff group 1
   level = 1,
@@ -27,7 +27,7 @@ cc_map = {
 
 local connected = false
 
-local function init()
+function faderfox.init()
   -- workaround: sometimes midi.devices table has empty values, so #midi.devices doesn't work
   for i=1,16 do
     if midi.vports[i] and midi.vports[i].name == "Faderfox EC4" then
@@ -39,7 +39,7 @@ local function init()
 
 end
 
-local function echo(param_id, new_value)
+function faderfox.echo(param_id, new_value)
   local p_name = string.sub(param_id, 2, -1)
   local midi_channel = string.sub(param_id, 1, 1)
   local midi_cc = cc_map[p_name]
@@ -52,14 +52,14 @@ local function echo(param_id, new_value)
   end
 end
 
-local function init_values()
+function faderfox.init_values()
   if connected then
     print("init faderfox values")
     for name, cc in pairs(cc_map) do
       for v=1, VOICE_COUNT do
         local param_id = v..name
         local new_value = params:get(param_id)
-        echo(param_id, new_value)
+        faderfox.echo(param_id, new_value)
       end
     end
   else
@@ -67,9 +67,4 @@ local function init_values()
   end
 end
 
-  return {
-    init = init,
-    echo = echo,
-    is_present = is_present,
-    init_values = init_values
-  }
+return faderfox
