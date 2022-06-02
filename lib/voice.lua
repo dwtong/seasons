@@ -8,8 +8,7 @@ local defaults = {
   INPUT_LEVEL = 1.0,
   SEND_LEVEL = 0.0,
   REC_LEVEL = 1.0,
-  LEVEL = 0.0,
-  FADE_AMOUNT = 0.25,
+  LEVEL = 0.0
 }
 
 sync_rates = {
@@ -36,7 +35,7 @@ local spec = {
   },
   FADE_TIME = controlspec.def{
     min=0, max=10, warp='lin', step=0.1,
-    default=0.5, quantum=0.01, wrap=false, units='s'
+    default=0.1, quantum=0.01, wrap=false, units='s'
   },
   SLEW = controlspec.def{
     min=0, max=60, warp='lin', step=0.1,
@@ -146,9 +145,6 @@ function voice.init_params(v)
   params:add_control(v.."rateslew", "rate slew", spec.SLEW)
   params:set_action(v.."rateslew", function(n) sc.rate_slew_time(v, n) end)
 
-  params:add_control(v.."fadetime", "fade time", spec.FADE_TIME)
-  params:set_action(v.."fadetime", function(n) sc.fade_time(v, n) end)
-
   params:add_separator("REC")
 
   params:add_binary(v.."togglerec", "toggle rec (K3)", "toggle", 1)
@@ -231,24 +227,28 @@ function voice.init_params(v)
     local loop_end = loop_start+params:get(v.."looplength")
     sc.loop_start(v, loop_start)
     sc.loop_end(v, loop_end)
+    param_callback(v.."loopstart", n)
   end)
 
   params:add_control(v.."looplength","loop length", spec.ZONE_LENGTH)
   params:set_action(v.."looplength", function(n)
     sc.loop_end(v, params:get(v.."loopstart")+n)
+    param_callback(v.."looplength", n)
   end)
 
+  params:add_control(v.."fadetime", "fade time", spec.FADE_TIME)
+  params:set_action(v.."fadetime", function(n)
+    sc.fade_time(v, n)
+    param_callback(v.."fadetime", n)
+  end)
 
   params:add_separator("CLOCK")
 
-  params:add_option(v.."syncrate", "sync rate", sync_rates, 6)
-  params:set_action(v.."syncrate", function(n)
-    -- match fade time to sync rate
-    -- TODO param to allow for this (or not)
-    params:set(v.."fadetime", sync_rates[n]/2)
+  params:add_option(v.."clockmult", "clock mult", sync_rates, 6)
+  params:add_control(v.."clockoffset", "clock offset", controlspec.BIPOLAR)
+  params:set_action(v.."clockoffset", function(n)
+    param_callback(v.."clockoffset", n)
   end)
-
-  params:add_control(v.."syncoffset", "sync offset", controlspec.BIPOLAR)
 
   params:add_separator("SENDS")
 

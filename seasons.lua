@@ -36,10 +36,11 @@ function init()
     -- testing
     clock.run(function()
       while true do
-        local sync = sync_rates[params:get(v.."syncrate")]
-        local offset = params:get(v.."syncoffset")
-        sync = util.clamp(sync, 0.001, 100)
-        clock.sync(sync + offset)
+        local sync = 1 -- TODO sequins this
+        local mult = sync_rates[params:get(v.."clockmult")]
+        local offset = params:get(v.."clockoffset")
+        local clamped_sync = util.clamp(sync * mult + offset, 0.001, 100)
+        clock.sync(clamped_sync)
         actions.reset_loop(v)
       end
     end)

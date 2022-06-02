@@ -4,7 +4,10 @@ cc_map = {
   pan = 2,
   prelevel = 3,
   sendlevelall = 4,
-  rateoct = 5
+  loopstart = 5,
+  looplength = 6,
+  fadetime = 7,
+  clockoffset = 8,
 }
 
 local connected = false
