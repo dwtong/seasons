@@ -138,14 +138,14 @@ function voice.init_params(v)
     local oct = 2^params:get(v.."rateoct")
     local semi = 1/12*params:get(v.."ratesemi")*oct
     local detune = 0.1*params:get(v.."ratedetune")*oct
-    local reverse = params:get(v.."ratereverse") == 1 and -1 or 1
+    local reverse = params:get(v.."togglereverse") == 1 and -1 or 1
     local rate = (oct + semi + detune) * reverse
     params:set(v.."rate", rate)
     param_callback(v..callback_param, n)
   end
 
-  params:add_binary(v.."ratereverse", "toggle reverse (K3)", "toggle", 0)
-  params:set_action(v.."ratereverse", function(n) set_rate("ratereverse") end)
+  params:add_binary(v.."togglereverse", "toggle reverse (K3)", "toggle", 0)
+  params:set_action(v.."togglereverse", function(n) set_rate("togglereverse") end)
 
   params:add_number(v.."rateoct", "rate (+oct)", -3, 3, 0)
   params:set_action(v.."rateoct", function(n) set_rate("rateoct") end)

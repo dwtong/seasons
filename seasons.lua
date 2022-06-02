@@ -82,7 +82,7 @@ end
 
 function key(k, z)
   if k == 2 then
-    params:set("1ratereverse", z)
+    params:set("togglereverse", z)
   end
 end
 
