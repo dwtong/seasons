@@ -63,16 +63,22 @@ local function cutoff(voice, new_value)
   local inc = 1/SLEW_FPS
 
   if new_value < f.value then inc = -inc end -- decrement if new value is lower than current value
+  -- FIXME clock is not cancelled in time if there is too much slewing happening
+  -- perhaps could use metro/next tick rather than constantly cancelling and creating clocks
   if f.clock then clock.cancel(f.clock) end -- stop any existing changes
 
 
-  f.clock = clock.run(function()
-    repeat
-      clock.sleep(sleep)
-      f.value = f.value + inc
-      apply_filter_cutoff(voice, f.value)
-    until math.floor(f.value) == math.floor(new_value)
-  end)
+  if f.slew_time >= 0.1 then
+    f.clock = clock.run(function()
+      repeat
+        clock.sleep(sleep)
+        f.value = f.value + inc
+        apply_filter_cutoff(voice, f.value)
+      until math.floor(f.value) == math.floor(new_value)
+    end)
+  else
+    apply_filter_cutoff(voice, new_value)
+  end
 end
 
 local function slew_time(voice, slew_time)

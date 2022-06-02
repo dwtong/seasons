@@ -12,6 +12,19 @@ local defaults = {
   FADE_AMOUNT = 0.25,
 }
 
+local sync_rates = {
+  1/16,
+  1/8,
+  1/4,
+  1/2,
+  3/4,
+  1/1,
+  5/4,
+  3/2,
+  7/4,
+  2/1
+}
+
 local spec = {
   ZONE_START = controlspec.def{
     min=0, max=ZONE_LENGTH, warp='lin', step=0.1,
@@ -155,6 +168,7 @@ function voice.init_params(v)
   params:set(v.."prelevel", defaults.PRE_LEVEL)
   params:set_action(v.."prelevel", function(n)
     if voice.is_rec(v) then sc.pre_level(v, n) end -- preserve all contents if not recording
+    param_callback(v.."prelevel", n)
   end)
 
   params:add_control(v.."recslew", "rec/pre slew", spec.SLEW)
@@ -223,13 +237,14 @@ function voice.init_params(v)
 
   params:add_separator("CLOCK")
 
-  -- TODO change test values
-  params:add_control(v.."syncrate", "sync rate", spec.ZONE_LENGTH)
-  params:set(v.."syncrate", v*3)
+  params:add_option(v.."syncrate", "sync rate", sync_rates, 6)
+  params:set_action(v.."syncrate", function(n)
+    -- match fade time to sync rate
+    -- TODO param to allow for this (or not)
+    params:set(v.."fadetime", sync_rates[n]/2)
+  end)
 
-  -- TODO change test values
-  params:add_control(v.."syncoffset", "sync offset", spec.ZONE_LENGTH)
-  params:set(v.."syncoffset", v*0.2)
+  params:add_control(v.."syncoffset", "sync offset", controlspec.UNIPOLAR)
 
   params:add_separator("SENDS")
 
@@ -269,15 +284,15 @@ function voice.init_actions(v)
   -- rates = s{v, s{v*5}:every(4)}
   -- rate_fn = s{v, v, v, v*4}
 
-  action_fn = function ()
-    local pos = voice.zone_start(v) + params:get(v.."loopstart")
-    sc.position(v, pos)
-  end
+  -- action_fn = function ()
+  --   local pos = voice.zone_start(v) + params:get(v.."loopstart")
+  --   sc.position(v, pos)
+  -- end
 
-  rate_fn = function() return params:get(v.."syncrate") end
-  offset_fn = function() return params:get(v.."syncoffset") end
+  -- rate_fn = function() return params:get(v.."syncrate") end
+  -- offset_fn = function() return params:get(v.."syncoffset") end
 
-  clock_sync_action(action_fn, rate_fn, offset_fn, v)
+  -- clock_sync_action(action_fn, rate_fn, offset_fn, v)
 end
 
 return voice

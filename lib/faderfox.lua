@@ -2,8 +2,9 @@ ff = {}
 cc_map = {
   level = 1,
   pan = 2,
-  rateoct = 3,
-  filter = 4
+  prelevel = 3,
+  filter = 4,
+  rateoct = 5
 }
 
 
@@ -26,7 +27,6 @@ local function echo(param_id, new_value)
     local range = params:get_range(param_id)
     local val = math.floor(util.linlin(range[1], range[2], 0, 127, new_value))
 
-    print("ch: "..p_voice..", cc: "..cc_map[p_name].." val: "..val)
     -- cc, value, midi channel
     ff:cc(cc_map[p_name], val, p_voice)
   end

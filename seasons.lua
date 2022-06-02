@@ -7,8 +7,11 @@ voice = include 'lib/voice'
 actions = include 'lib/actions'
 faderfox = include 'lib/faderfox'
 filter = include 'lib/filter'
-cr = include 'lib/crow'
+_crow = include 'lib/crow'
 sc = softcut
+
+-- testing
+offset = 0
 
 VOICE_COUNT = 4
 voices = {}
@@ -29,9 +32,18 @@ function init()
     voice.init_softcut(v)
     voice.init_params(v)
     voice.init_actions(v)
+
+    -- testing
+    clock.run(function()
+      while true do
+        clock.sync(params:get(v.."syncrate"), -params:get(v.."syncoffset"))
+        actions.reset_loop(v)
+      end
+    end)
   end
 
-  norns.crow.add = cr.init() -- crow
+  norns.crow.add = _crow.init -- crow
+  _crow.init()
 
   faderfox.init_values()
 end
@@ -43,6 +55,23 @@ end
 
 function param_callback(param_id, new_value)
   faderfox.echo(param_id, new_value)
+end
+
+function enc(n, d)
+  if n == 1 then
+    delta_all("level", d)
+  elseif n == 2 then
+    delta_all("filter", d)
+  elseif n == 3 then
+    delta_all("pan", d)
+  end
+end
+
+function delta_all(param, delta, step)
+  step = step or 1
+  for v=1, #voices do
+    params:delta(v..param, delta*step)
+  end
 end
 
 -- callback functions can be sequins, or other functions that return values
@@ -74,7 +103,7 @@ function redraw()
   end
 
   screen.move(10, #voices*10+20)
-  if cr.trig_text then screen.text("trigger!") end
+  if _crow.trig_text then screen.text("trigger!") end
 
   screen.update()
 end
@@ -99,6 +128,7 @@ function flip_rate(v)
 end
 
 -- thanks @tyleretters
-function r()
+function re()
   norns.script.load(norns.state.script)
 end
+
