@@ -8,6 +8,8 @@ actions = include 'lib/actions'
 faderfox = include 'lib/faderfox'
 filter = include 'lib/filter'
 _crow = include 'lib/crow'
+_grid = include 'lib/grid'
+view = include 'lib/view'
 sc = softcut
 
 VOICE_COUNT = 4
@@ -48,6 +50,8 @@ function init()
 
   norns.crow.add = _crow.init -- crow
   _crow.init()
+  _grid.init()
+  view.redraw()
 
   midi.add = function(device)
     if device.name == "Faderfox EC4" then
@@ -63,26 +67,34 @@ end
 
 function update_position(v, pos)
   voices[v].position = pos - 1
-  redraw()
+  view.redraw()
 end
 
 function param_callback(param_id, new_value)
   faderfox.echo(param_id, new_value)
 end
 
+-- decrease sensitivity of encoder 2
+norns.enc.sens(2, 2)
+
 function enc(n, d)
+  local change = util.clamp(d, -1, 1)
+
   if n == 1 then
-    delta_all("level", d)
-  elseif n == 2 then
-    delta_all("filter", d)
+    -- delta_all("level", d)
+  elseif n == 2 and view.menu_level == 2 then
+    -- delta_all("filter", d)
+    view.active_page = util.clamp(view.active_page + change, 1, #view.pages)
   elseif n == 3 then
-    delta_all("prelevel", d)
+    -- delta_all("prelevel", d)
   end
 end
 
 function key(k, z)
-  if k == 2 then
-    params:set("togglereverse", z)
+  if k == 2 and z == 1 then
+    view.menu_level = 2
+  elseif k == 3 and z == 1 then
+    view.menu_level = 3
   end
 end
 
