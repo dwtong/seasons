@@ -6,11 +6,15 @@ view.pages = {
   'loops',
   'levels',
   'filters',
-  'actions'
+  'actions',
+  'clock',
+  'crow',
+  'lfo'
 }
 
 view.active_page = 1
 view.menu_level = 2
+-- view.list_position = 1
 
 -- FONTS (f=face, s=size)
 -- main menu
@@ -20,15 +24,37 @@ view.menu_level = 2
 -- local function draw_main_menu()
 -- end
 
+
+local function visible_page_list()
+  local visible_pages = {}
+  local min, max = 1, 4
+
+  if view.active_page > 4 then
+    min, max = 5, 8
+  end
+
+  for i=min,max do
+    table.insert(visible_pages, view.pages[i])
+  end
+
+  return visible_pages
+end
+
 local function draw_list_menu()
   screen.font_face(1)
   screen.font_size(8)
+  local page_list = visible_page_list()
 
-  for i, page in ipairs(view.pages) do
+  -- screen.level(5)
+  -- screen.move(38, 0)
+  -- screen.line(38, 63)
+  -- screen.stroke()
+
+  for i, page in ipairs(page_list) do
     screen.level(5)
 
-    if i == view.active_page then
-      screen.rect(2, i*12-7+i, 33, 10)
+    if page == view.pages[view.active_page] then
+      screen.rect(0, i*12-7+i, 35, 10)
       screen.level(5)
       if view.menu_level == 2 then
         screen.fill()

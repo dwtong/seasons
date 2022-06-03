@@ -67,7 +67,7 @@ end
 
 function update_position(v, pos)
   voices[v].position = pos - 1
-  view.redraw()
+  -- view.redraw()
 end
 
 function param_callback(param_id, new_value)
@@ -83,11 +83,11 @@ function enc(n, d)
   if n == 1 then
     -- delta_all("level", d)
   elseif n == 2 and view.menu_level == 2 then
-    -- delta_all("filter", d)
     view.active_page = util.clamp(view.active_page + change, 1, #view.pages)
   elseif n == 3 then
     -- delta_all("prelevel", d)
   end
+  redraw()
 end
 
 function key(k, z)
@@ -96,6 +96,7 @@ function key(k, z)
   elseif k == 3 and z == 1 then
     view.menu_level = 3
   end
+  redraw()
 end
 
 function delta_all(param, delta, step)
@@ -125,19 +126,21 @@ function perform_action(fn, rate, ...)
 end
 
 function redraw()
-  screen.clear()
-  for v=1, #voices do
-    screen.move(10, v*10)
-    screen.text(v.." position:")
-    screen.move(118,v*10)
-    screen.text_right(string.format("%.1f", voices[v].position - voice.zone_start(v) + 1))
-  end
-
-  screen.move(10, #voices*10+20)
-  if _crow.trig_text then screen.text("trigger!") end
-
-  screen.update()
+  view.redraw()
 end
+--   screen.clear()
+--   for v=1, #voices do
+--     screen.move(10, v*10)
+--     screen.text(v.." position:")
+--     screen.move(118,v*10)
+--     screen.text_right(string.format("%.1f", voices[v].position - voice.zone_start(v) + 1))
+--   end
+
+--   screen.move(10, #voices*10+20)
+--   if _crow.trig_text then screen.text("trigger!") end
+
+--   screen.update()
+-- end
 
 num = 1
 dem = 8
