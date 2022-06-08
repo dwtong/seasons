@@ -134,6 +134,8 @@ function voice.init_params(v)
   end)
 
   local function set_rate(callback_param)
+    -- MusicUtil = require("musicutil")
+    -- musicutil.interval_to_ratio (interval)
     -- FIXME probably incorrect calculations
     local oct = 2^params:get(v.."rateoct")
     local semi = 1/12*params:get(v.."ratesemi")*oct

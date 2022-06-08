@@ -75,14 +75,14 @@ function param_callback(param_id, new_value)
 end
 
 -- decrease sensitivity of encoder 2
-norns.enc.sens(2, 2)
+-- norns.enc.sens(2, 2)
 
 function enc(n, d)
-  local change = util.clamp(d, -1, 1)
+  -- local change = util.clamp(d, -1, 1) -- this also affects menu it seems
 
-  if n == 1 then
+  -- if n == 1 then
     -- delta_all("level", d)
-  elseif n == 2 and view.menu_level == 2 then
+  if n == 2 and view.menu_level == 2 then
     view.active_page = util.clamp(view.active_page + change, 1, #view.pages)
   elseif n == 3 then
     -- delta_all("prelevel", d)
