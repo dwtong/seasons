@@ -4,11 +4,11 @@ MIN_LOOP_SIZE = 0.05 -- 50ms/20hz
 
 voice = {}
 local defaults = {
-  PRE_LEVEL = 0.5,
+  PRE_LEVEL = 0.3,
   INPUT_LEVEL = 1.0,
   SEND_LEVEL = 0.0,
   REC_LEVEL = 1.0,
-  LEVEL = 0.0
+  LEVEL = 0.5
 }
 
 sync_rates = {
@@ -46,6 +46,10 @@ local spec = {
     default=1, quantum=0.01, wrap=false
   },
 }
+
+function voice.setall(param, value) 
+  for v=1,4 do params:set(v..param, value) end
+end
 
 function voice.zone_start(v)
   -- FIXME surely this is inefficient
