@@ -32,15 +32,12 @@ function init()
     voice.init_params(v)
     voice.init_actions(v)
 
-    -- testing
     clock.run(function()
       while true do
-        local sync = 1 -- TODO sequins this
-        local mult = sync_rates[params:get(v.."clockmult")]
-        local offset = params:get(v.."clockoffset")
-        local clamped_sync = util.clamp(sync * mult + offset, 0.001, 100)
-        clock.sync(clamped_sync)
-        actions.reset_loop(v, clamped_sync)
+        local sync = voice.sync_rate(v)
+        if v == 1 then print('sync at '..sync) end
+        clock.sync(sync)
+        actions.reset_loop(v, sync)
       end
     end)
   end
@@ -51,7 +48,7 @@ function init()
   norns.crow.add = _crow.init -- crow
   _crow.init()
   _grid.init()
-  view.redraw()
+  -- view.redraw()
 
   midi.add = function(device)
     if device.name == "Faderfox EC4" then
@@ -59,10 +56,6 @@ function init()
       faderfox.init_values()
     end
   end
-
-  -- testing
-  sync = s{1, 1/2, s{s{1}:count(2),2}, s{1/4}:count(4)}
-  cjf = clock.run(function() while true do actions.play_note(sca, oct, vel); clock.sync(sync()) end end)
 end
 
 function update_position(v, pos)
@@ -87,7 +80,7 @@ function enc(n, d)
   elseif n == 3 then
     -- delta_all("prelevel", d)
   end
-  redraw()
+  -- redraw()
 end
 
 function key(k, z)
@@ -126,7 +119,7 @@ function perform_action(fn, rate, ...)
 end
 
 function redraw()
-  view.redraw()
+  -- view.redraw()
 end
 --   screen.clear()
 --   for v=1, #voices do

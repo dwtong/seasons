@@ -11,18 +11,9 @@ local defaults = {
   LEVEL = 0.5
 }
 
-sync_rates = {
-  1/12,
-  1/8,
-  1/4,
-  1/2,
-  3/4,
-  1/1,
-  5/4,
-  3/2,
-  7/4,
-  2/1
-}
+sync_rates = {}
+for i=1,9 do sync_rates[i] = 1/(9-i) end -- 1/8 to 1/1
+for i=1,7 do sync_rates[i+8] = i+1 end -- 1 to 8
 
 local spec = {
   ZONE_START = controlspec.def{
@@ -47,7 +38,7 @@ local spec = {
   },
 }
 
-function voice.setall(param, value) 
+function voice.setall(param, value)
   for v=1,4 do params:set(v..param, value) end
 end
 
@@ -59,6 +50,10 @@ end
 
 function voice.zone_end(v) return voice.zone_start(v) + ZONE_LENGTH end
 function voice.is_rec(v) return params:get(v.."togglerec") == 1 end
+
+function voice.sync_rate(v)
+  return sync_rates[params:get(v.."syncbase")] * sync_rates[params:get(v.."syncmult")] + params:get(v.."syncoffset")
+end
 
 function voice.init_softcut(v)
   print("init voice "..v.." softcut")
@@ -98,7 +93,7 @@ end
 
 function voice.init_params(v)
   print("init voice "..v.." params")
-  params:add_group("voice "..v.." params", 38)
+  params:add_group("voice "..v.." params", 39)
 
   params:add_separator("PLAY")
 
@@ -121,8 +116,8 @@ function voice.init_params(v)
     param_callback(v.."pan", n)
   end)
   -- FIXME for testing
-  pans = {-1.0, -0.5, 0.5, 1}
-  params:set(v.."pan", pans[v])
+  -- pans = {-1.0, -0.5, 0.5, 1}
+  -- params:set(v.."pan", pans[v])
 
   params:add_control(v.."panslew", "pan slew", spec.SLEW)
   params:set_action(v.."panslew", function(n)
@@ -292,11 +287,9 @@ function voice.init_params(v)
 
   params:add_separator("CLOCK")
 
-  params:add_option(v.."clockmult", "clock mult", sync_rates, 6)
-  params:add_control(v.."clockoffset", "clock offset", controlspec.BIPOLAR)
-  params:set_action(v.."clockoffset", function(n)
-    param_callback(v.."clockoffset", n)
-  end)
+  params:add_option(v.."syncbase", "sync base", sync_rates, 8)
+  params:add_option(v.."syncmult", "sync mult", sync_rates, 8)
+  params:add_control(v.."syncoffset", "sync offset", controlspec.UNIPOLAR)
 
   params:add_separator("SENDS")
 

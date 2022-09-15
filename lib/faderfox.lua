@@ -10,7 +10,7 @@ cc_map = {
   loopstart = 5,
   looplength = 6,
   fadetime = 7,
-  clockoffset = 8,
+  syncoffset = 8,
 
   -- ff group 3
   filter = 9,
