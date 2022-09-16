@@ -35,7 +35,6 @@ function init()
     clock.run(function()
       while true do
         local sync = voice.sync_rate(v)
-        if v == 1 then print('sync at '..sync) end
         clock.sync(sync)
         actions.reset_loop(v, sync)
       end
@@ -65,6 +64,7 @@ end
 
 function param_callback(param_id, new_value)
   faderfox.echo(param_id, new_value)
+  _grid.dirty = true
 end
 
 -- decrease sensitivity of encoder 2

@@ -117,8 +117,8 @@ function voice.init_params(v)
     param_callback(v.."pan", n)
   end)
   -- FIXME for testing
-  -- pans = {-1.0, -0.5, 0.5, 1}
-  -- params:set(v.."pan", pans[v])
+  pans = {-1.0, -0.5, 0.5, 1}
+  params:set(v.."pan", pans[v])
 
   params:add_control(v.."panslew", "pan slew", spec.SLEW)
   params:set_action(v.."panslew", function(n)
@@ -176,6 +176,7 @@ function voice.init_params(v)
       sc.rec_level(v, 0)
       sc.pre_level(v, 1.0) -- preserve current buffer contents
     end
+    param_callback(v.."togglerec", x)
   end)
 
   -- params:add_binary(v.."freeze", "freeze (K3)", "momentary", 0)
