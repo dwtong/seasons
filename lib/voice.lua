@@ -68,13 +68,14 @@ function voice.init_softcut(v)
   sc.rate(v, 1.0)
   sc.pan(v, 0)
   sc.pre_level(v, defaults.PRE_LEVEL)
-  sc.rec_level(v, defaults.REC_LEVEL)
 
   sc.loop(v, 1)
   sc.position(v, voice.zone_start(v))
   sc.loop_start(v, voice.zone_start(v))
   sc.loop_end(v, voice.zone_end(v))
-  sc.rec(v, 1)
+
+  sc.rec_level(v, 0)
+  sc.rec(v, 0)
 
   sc.phase_quant(v, 0.05) -- adjust to change performance impact
   sc.event_phase(update_position)
@@ -165,11 +166,12 @@ function voice.init_params(v)
 
   params:add_separator("REC")
 
-  params:add_binary(v.."togglerec", "toggle rec (K3)", "toggle", 1)
+  params:add_binary(v.."togglerec", "toggle rec (K3)", "toggle", 0)
   params:set_action(v.."togglerec",function(x)
     if x == 1 then
       sc.rec_level(v, params:get(v.."reclevel"))
       sc.pre_level(v, params:get(v.."prelevel"))
+      sc.rec(v, 1)
     else
       sc.rec_level(v, 0)
       sc.pre_level(v, 1.0) -- preserve current buffer contents
