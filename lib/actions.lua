@@ -35,17 +35,8 @@ function actions.reset_loop(v, length)
   end
 end
 
--- crow.ii.jf.mode(1)
--- -- sca = s{0,2,4,7,9}
--- -- oct = s{0,0,0,1,1,1}
--- oct = s{0}
--- sca = s{0}
--- vel = 2
-function actions.play_note(sca, oct, vel)
-  crow.ii.jf.play_note(sca()/12 + oct(), vel())
-end
-
 function actions.toggle_rec(v) toggle_param(v, "togglerec") end
+function actions.toggle_mute(v) toggle_param(v, "togglemute") end
 function actions.toggle_reverse(v) toggle_param(v, "togglereverse") end
 function actions.toggle_filter(v) toggle_param(v, "togglefilter") end
 

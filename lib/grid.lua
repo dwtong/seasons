@@ -14,19 +14,35 @@ end
 local callbacks = {}
 for x=1,16 do callbacks[x] = {} end
 
-local alt = false
+alt = false
+pos = {1,1,1,1}
+bright = {1,1,1,1}
 
 function _grid.init()
   clock.run(grid_redraw_clock)
 
   for v=1,4 do
+    clock.run(function()
+      while true do
+        pos[v] = pos[v] % 4 + 1
+        for b=1,10 do
+          bright[v] = b
+          local steps = 10 * 4 -- 9 levels of brightness, 4 buttons
+          clock.sync(voice.sync_rate(v)/steps)
+          _grid.dirty = true
+        end
+      end
+    end)
+  end
+
+  for v=1,4 do
     x = (v-1)*4+1
     callbacks[x][2] = function(state)
-      if alt then
-        actions.toggle_rec()
-      else
-        actions.toggle_rec(v)
-      end
+      if alt then actions.toggle_rec() else actions.toggle_rec(v) end
+    end
+
+    callbacks[x+1][2] = function(state)
+      if alt then actions.toggle_mute() else actions.toggle_mute(v) end
     end
   end
 end
@@ -42,17 +58,17 @@ function grid_redraw_clock()
 end
 
 function grid_redraw()
-  -- zones
-  for x=1,16 do
-    brt = 4
-    g:led(x, 1, 4)
+  -- ticker
+  for v=1,4 do
+    offset = (v-1)*4
+    for x = 1,4 do
+      local brt = 1
+      if x == pos[v] - 1 then brt = 10 - bright[v] end
+      if x == 4 and pos[v] == 1 then brt = 10 - bright[v] end
+      if x == pos[v] then brt = 10 end
+      g:led(x+offset, 1, brt)
+    end
   end
-
-  -- selected zones
-  g:led(1, 1, 8)
-  g:led(6, 1, 8)
-  g:led(11, 1, 8)
-  g:led(16, 1, 8)
 
   -- rec
   for v=1,4 do
@@ -64,7 +80,7 @@ function grid_redraw()
   -- mutes
   for v=1,4 do
     x = (v-1)*4+2
-    local brt = 6
+    local brt = voice.is_muted(v) and 6 or 10
     g:led(x, 2, brt)
   end
 

@@ -50,6 +50,7 @@ end
 
 function voice.zone_end(v) return voice.zone_start(v) + ZONE_LENGTH end
 function voice.is_rec(v) return params:get(v.."togglerec") == 1 end
+function voice.is_muted(v) return params:get(v.."togglemute") == 1 end
 
 function voice.sync_rate(v)
   return sync_rates[params:get(v.."syncbase")] * sync_rates[params:get(v.."syncmult")] + params:get(v.."syncoffset")
@@ -94,7 +95,7 @@ end
 
 function voice.init_params(v)
   print("init voice "..v.." params")
-  params:add_group("voice "..v.." params", 39)
+  params:add_group("voice "..v.." params", 40)
 
   params:add_separator("PLAY")
 
@@ -110,6 +111,17 @@ function voice.init_params(v)
     sc.level_slew_time(v, n)
     param_callback(v.."levelslew", n)
   end)
+
+  params:add_binary(v.."togglemute", "toggle mute (K3)", "toggle", 0)
+  params:set_action(v.."togglemute",function(x)
+    if x == 1 then
+      sc.level(v, 0)
+    else
+      sc.level(v, params:get(v.."level"))
+    end
+    param_callback(v.."togglemute", x)
+  end)
+
 
   params:add_control(v.."pan", "pan", controlspec.PAN)
   params:set_action(v.."pan", function(n)
@@ -178,16 +190,6 @@ function voice.init_params(v)
     end
     param_callback(v.."togglerec", x)
   end)
-
-  -- params:add_binary(v.."freeze", "freeze (K3)", "momentary", 0)
-  -- params:set_action(v.."freeze",function(x)
-  --   if x == 1 then
-  --     -- set loop start, end to within x of current position
-  --     -- somehow deal with position resets from clock
-  --   else
-  --     -- restore previous loop, position sync settings
-  --   end
-  -- end)
 
   params:add_control(v.."reclevel", "rec level", controlspec.UNIPOLAR)
   params:set(v.."reclevel", defaults.REC_LEVEL)
